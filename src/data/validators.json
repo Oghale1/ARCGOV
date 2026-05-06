@@ -1,0 +1,98 @@
+[
+  {
+    "rank": 1,
+    "name": "BlackRock Digital",
+    "institution": "BlackRock",
+    "country": "USA",
+    "location": "New York, USA",
+    "uptime": 99.97,
+    "commission": 5,
+    "quantum": "PQ Ready",
+    "status": "Active",
+    "slug": "blackrock-digital"
+  },
+  {
+    "rank": 2,
+    "name": "Visa Crypto Infrastructure",
+    "institution": "Visa",
+    "country": "USA",
+    "location": "San Francisco, USA",
+    "uptime": 99.91,
+    "commission": 5,
+    "quantum": "PQ Ready",
+    "status": "Active",
+    "slug": "visa-crypto"
+  },
+  {
+    "rank": 3,
+    "name": "Goldman Sachs Digital Assets",
+    "institution": "Goldman Sachs",
+    "country": "UK",
+    "location": "London, UK",
+    "uptime": 99.88,
+    "commission": 6,
+    "quantum": "In Progress",
+    "status": "Active",
+    "slug": "goldman-sachs"
+  },
+  {
+    "rank": 4,
+    "name": "Coinbase",
+    "institution": "Coinbase",
+    "country": "USA",
+    "location": "San Francisco, USA",
+    "uptime": 99.85,
+    "commission": 5,
+    "quantum": "PQ Ready",
+    "status": "Active",
+    "slug": "coinbase"
+  },
+  {
+    "rank": 5,
+    "name": "Amazon Web Services",
+    "institution": "AWS",
+    "country": "USA",
+    "location": "Seattle, USA",
+    "uptime": 99.95,
+    "commission": 4,
+    "quantum": "PQ Ready",
+    "status": "Active",
+    "slug": "aws"
+  },
+  {
+    "rank": 6,
+    "name": "Mastercard Digital Labs",
+    "institution": "Mastercard",
+    "country": "USA",
+    "location": "New York, USA",
+    "uptime": 99.79,
+    "commission": 5,
+    "quantum": "Pending",
+    "status": "Active",
+    "slug": "mastercard"
+  },
+  {
+    "rank": 7,
+    "name": "Société Générale",
+    "institution": "Société Générale",
+    "country": "France",
+    "location": "Paris, France",
+    "uptime": 99.71,
+    "commission": 6,
+    "quantum": "Pending",
+    "status": "Active",
+    "slug": "societe-generale"
+  },
+  {
+    "rank": 8,
+    "name": "State Street Digital",
+    "institution": "State Street",
+    "country": "USA",
+    "location": "Boston, USA",
+    "uptime": 99.83,
+    "commission": 5,
+    "quantum": "In Progress",
+    "status": "Active",
+    "slug": "state-street"
+  }
+]
