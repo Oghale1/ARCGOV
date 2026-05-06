@@ -4,6 +4,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import TestnetBanner from "@/components/shared/TestnetBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,10 +21,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} bg-white dark:bg-[#0F1117] text-black dark:text-white min-h-screen`}>
+      <body className={`${inter.className} bg-white dark:bg-[#0F1117] text-black dark:text-white min-h-screen flex flex-col`}>
         <Providers>
+          <TestnetBanner />
           <Navbar />
-          {children}
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
         </Providers>
       </body>
     </html>

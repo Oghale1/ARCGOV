@@ -10,6 +10,7 @@ import {
 import { WagmiProvider } from 'wagmi';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
+import { ToastProvider } from '@/components/shared/Toast';
 import '@rainbow-me/rainbowkit/styles.css';
 
 const arcTestnet: Chain = {
@@ -44,9 +45,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <RainbowKitProvider>
-            {children}
-          </RainbowKitProvider>
+          <ToastProvider>
+            <RainbowKitProvider>
+              {children}
+            </RainbowKitProvider>
+          </ToastProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </WagmiProvider>
