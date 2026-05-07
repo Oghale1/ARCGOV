@@ -13,7 +13,7 @@ import { ThemeProvider } from 'next-themes';
 import { ToastProvider } from '@/components/shared/Toast';
 import '@rainbow-me/rainbowkit/styles.css';
 
-const arcTestnet: Chain = {
+export const arcTestnet: Chain = {
   id: 5042002,
   name: 'Arc Testnet',
   nativeCurrency: {
@@ -44,7 +44,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider 
+          attribute="class" 
+          defaultTheme="system" 
+          enableSystem
+          disableTransitionOnChange
+        >
           <ToastProvider>
             <RainbowKitProvider>
               {children}

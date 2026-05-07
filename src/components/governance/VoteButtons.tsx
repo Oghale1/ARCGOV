@@ -9,6 +9,8 @@ import {
 } from 'wagmi';
 import { ARC_GOV_CORE_ADDRESS, ARC_GOV_CORE_ABI } from '@/lib/contract';
 import { CheckCircle2, AlertCircle, Loader2, ExternalLink } from 'lucide-react';
+import { useChainId } from 'wagmi';
+import { useToast } from '@/components/shared/Toast';
 
 interface VoteButtonsProps {
   proposalId: bigint;
@@ -26,14 +28,26 @@ export function VoteButtons({ proposalId, isOpen }: VoteButtonsProps) {
     hash,
   });
 
+  const chainId = useChainId();
+  const { toast } = useToast();
+
   const handleVote = (voteType: number) => {
     if (!isConnected) return;
+    if (chainId !== 5042002) {
+      toast("Please switch to Arc Testnet before voting", "error");
+      return;
+    }
     setSelectedVote(voteType);
     setShowConfirm(true);
   };
 
   const confirmVote = () => {
     if (selectedVote === null) return;
+    if (chainId !== 5042002) {
+      toast("Please switch to Arc Testnet before voting", "error");
+      setShowConfirm(false);
+      return;
+    }
     writeContract({
       address: ARC_GOV_CORE_ADDRESS,
       abi: ARC_GOV_CORE_ABI,

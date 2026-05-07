@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { useAccount, useReadContract } from 'wagmi';
+import { useAccount, useReadContract, useChainId, useSwitchChain } from 'wagmi';
 import { 
   User, 
   History, 
@@ -23,6 +23,8 @@ import { Proposal } from '@/components/governance/ProposalCard';
 
 export default function MyDashboard() {
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
 
   const { data: rawProposals, isLoading } = useReadContract({
     address: ARC_GOV_CORE_ADDRESS,
@@ -158,13 +160,27 @@ export default function MyDashboard() {
                 <Award size={20} />
                 Gov Rewards
               </h3>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Accumulated Rewards</p>
-                <p className="text-3xl font-black font-mono">142.50 USDC</p>
-              </div>
-              <button className="w-full py-3 bg-white text-[#1D9E75] font-black rounded-xl hover:bg-gray-50 transition-colors">
-                CLAIM REWARDS
-              </button>
+              {chainId === 5042002 ? (
+                <>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Accumulated Rewards</p>
+                    <p className="text-3xl font-black font-mono">142.50 USDC</p>
+                  </div>
+                  <button className="w-full py-3 bg-white text-[#1D9E75] font-black rounded-xl hover:bg-gray-50 transition-colors">
+                    CLAIM REWARDS
+                  </button>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm font-medium opacity-90">Switch to Arc Testnet to see your USDC balance and rewards.</p>
+                  <button 
+                    onClick={() => switchChain({ chainId: 5042002 })}
+                    className="w-full py-3 bg-white/20 hover:bg-white/30 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 border border-white/30"
+                  >
+                    <RefreshCw size={16} /> Switch Network
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Notifications */}

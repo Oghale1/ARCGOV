@@ -6,12 +6,23 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { ProposalCard, Proposal } from '@/components/governance/ProposalCard';
 import { Search, Filter, Plus, ExternalLink } from 'lucide-react';
-import { useReadContract } from 'wagmi';
+import { useReadContract, useChainId } from 'wagmi';
 import { ARC_GOV_CORE_ADDRESS, ARC_GOV_CORE_ABI } from '@/lib/contract';
+import { useToast } from '@/components/shared/Toast';
 
 export default function Governance() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
+  const chainId = useChainId();
+  const { toast } = useToast();
+
+  const handleOpenSubmit = () => {
+    if (chainId !== 5042002) {
+      toast("Please switch to Arc Testnet before submitting a proposal", "error");
+      return;
+    }
+    // TODO: Open modal
+  };
 
   const { data: rawProposals, isLoading } = useReadContract({
     address: ARC_GOV_CORE_ADDRESS,
@@ -45,7 +56,10 @@ export default function Governance() {
             <h1 className="text-4xl font-extrabold tracking-tight mb-2">Arc Governance</h1>
             <p className="text-lg text-[#6B7280] dark:text-[#9CA3AF]">Shape the future of the world's first stablecoin-native Layer-1.</p>
           </div>
-          <button className="btn-primary flex items-center gap-2">
+          <button 
+            onClick={handleOpenSubmit}
+            className="btn-primary flex items-center gap-2"
+          >
             <Plus size={20} />
             Submit Proposal
           </button>
