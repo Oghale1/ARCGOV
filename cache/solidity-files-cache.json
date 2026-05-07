@@ -2,17 +2,17 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\DELL\\Desktop\\ARCGOV\\contracts\\ArcGovCore.sol": {
-      "lastModificationDate": 1777945399676,
-      "contentHash": "bbe4bb31edfd3494083abd7b0f42366a",
+      "lastModificationDate": 1778138131952,
+      "contentHash": "1cb2255359919d8e42a0e6127e63678a",
       "sourceName": "contracts/ArcGovCore.sol",
       "solcConfig": {
         "version": "0.8.20",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
