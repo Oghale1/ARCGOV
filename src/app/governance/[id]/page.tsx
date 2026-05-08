@@ -124,11 +124,26 @@ export default function ProposalDetail() {
     setIsSummarizing(true);
     setIsSummaryExpanded(true);
     try {
-      // Mocking the /api/summarise call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setSummary(`AI Summary: This proposal seeks to ${proposal.category === 0 ? 'onboard a new validator' : proposal.category === 1 ? 'adjust network parameters' : 'upgrade protocol infrastructure'} to enhance Arc's overall security and efficiency. Key impacts include optimized transaction throughput and reinforced consensus stability for the USDC-native economy.`);
+      const response = await fetch('/api/summarise', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          proposalTitle: proposal.title,
+          proposalDescription: proposal.description,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch summary');
+      }
+
+      const data = await response.json();
+      setSummary(data.summary);
     } catch (err) {
       toast("AI summarization failed", "error");
+      console.error(err);
     } finally {
       setIsSummarizing(false);
     }
