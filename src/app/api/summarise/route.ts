@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(request: Request) {
   try {
@@ -11,45 +12,24 @@ export async function POST(request: Request) {
       );
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'ANTHROPIC_API_KEY is not configured' },
+        { error: 'GEMINI_API_KEY is not configured' },
         { status: 500 }
       );
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20240620', // Using a valid stable model name
-        max_tokens: 500,
-        system: "You are a governance analyst for Arc blockchain by Circle. Summarise governance proposals in plain English for non-technical readers. Keep summaries under 200 words. Be neutral, factual, and clear. Always start with 'This proposal aims to...'",
-        messages: [
-          {
-            role: 'user',
-            content: `Proposal title: ${proposalTitle}\n\nDescription: ${proposalDescription}\n\nWrite a plain English summary.`,
-          },
-        ],
-      }),
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      systemInstruction: "You are a governance analyst for Arc blockchain by Circle. Summarise governance proposals in plain English for non-technical readers. Keep summaries under 200 words. Be neutral, factual, and clear. Always start with 'This proposal aims to...'",
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Anthropic API error:', errorData);
-      return NextResponse.json(
-        { error: 'Failed to fetch summary from Anthropic' },
-        { status: 500 }
-      );
-    }
-
-    const data = await response.json();
-    const summary = data.content[0].text;
+    const prompt = `Proposal title: ${proposalTitle}\n\nDescription: ${proposalDescription}\n\nWrite a plain English summary.`;
+    
+    const result = await model.generateContent(prompt);
+    const summary = result.response.text();
 
     return NextResponse.json({ summary });
   } catch (error) {
