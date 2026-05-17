@@ -2,8 +2,8 @@
 // ArcGov — Built by Gemini — arcgov.xyz
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import { 
   Search, 
   Plus, 
@@ -16,13 +16,19 @@ import {
   XCircle, 
   AlertCircle,
   Loader2,
-  X
+  X,
+  Calendar as CalendarIcon,
+  ArrowRight
 } from 'lucide-react';
 import { getAllProposals, submitProposal } from '@/lib/contract';
 import { useAccount, useWalletClient, usePublicClient, useChainId } from 'wagmi';
 import { useToast } from '@/components/shared/Toast';
 import Link from 'next/link';
 import SkeletonLoader from '@/components/shared/SkeletonLoader';
+import NetworkError from '@/components/shared/NetworkError';
+import VerifiedBadge from '@/components/shared/VerifiedBadge';
+import ProposalCard from '@/components/governance/ProposalCard';
+import TestnetChip from '@/components/shared/TestnetChip';
 
 const CATEGORY_LABELS = ['VALIDATOR', 'PARAMETER', 'UPGRADE', 'ECOSYSTEM'];
 const CATEGORY_COLORS: any = {
@@ -37,6 +43,7 @@ export default function Governance() {
   const [search, setSearch] = useState('');
   const [filterTab, setFilterTab] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
+  const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -51,7 +58,8 @@ export default function Governance() {
     setIsLoading(true);
     try {
       const all = await getAllProposals();
-      setProposals(all || []);
+      setProposals((all as any[]) || []);
+      setLastFetchedAt(new Date());
     } catch (err) {
       console.error(err);
     } finally {
@@ -138,17 +146,25 @@ export default function Governance() {
 
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         {/* SECTION 1 — HERO */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12 text-center md:text-left">
           <div>
-            <h1 className="text-4xl font-black tracking-tight mb-2">Arc Governance</h1>
+            <div className="flex flex-col md:flex-row items-center gap-4 mb-2">
+               <h1 className="text-4xl md:text-5xl font-black tracking-tight">Arc Governance</h1>
+               <Link 
+                href="/governance/calendar" 
+                className="px-3 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-full text-[10px] font-black text-gray-500 hover:text-[#1D9E75] hover:border-[#1D9E75] transition-all flex items-center gap-1.5"
+               >
+                 <CalendarIcon size={12} /> CALENDAR
+               </Link>
+            </div>
             <p className="text-lg text-gray-500 dark:text-gray-400">Vote on proposals that shape the Arc network</p>
           </div>
           
-          <div className="relative group">
+          <div className="relative group w-full md:w-auto">
             <button 
               onClick={() => isConnected ? setIsModalOpen(true) : null}
               disabled={!isConnected}
-              className={`btn-primary flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${!isConnected ? 'opacity-50 cursor-not-allowed bg-gray-400' : 'bg-[#1D9E75] text-white hover:bg-[#0F6E56]'}`}
+              className={`w-full md:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-black transition-all ${!isConnected ? 'opacity-50 cursor-not-allowed bg-gray-400 text-white' : 'bg-[#1D9E75] text-white hover:bg-[#0F6E56]'}`}
             >
               <Plus size={20} />
               Submit Proposal
@@ -162,7 +178,7 @@ export default function Governance() {
         </div>
 
         {/* SECTION 2 — STATS ROW */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
           {[
             { label: 'Total Proposals', value: stats.total },
             { label: 'Active Now', value: stats.active, color: 'text-[#1D9E75]' },
@@ -171,19 +187,31 @@ export default function Governance() {
           ].map((s) => (
             <div key={s.label} className="p-6 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-3xl">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
-              <p className={`text-3xl font-black ${s.color || ''}`}>{isLoading ? '...' : s.value}</p>
+              <p className={`text-3xl font-black ${s.color || ''}`}>
+                 {isLoading ? '...' : (s.value === 0 ? <>{s.value} <TestnetChip /></> : s.value)}
+              </p>
             </div>
           ))}
         </div>
 
+        {/* VERIFIED BADGE */}
+        <div className="mb-12 border-b border-gray-50 dark:border-gray-900/50 pb-4">
+           <VerifiedBadge 
+             explorerUrl={`https://testnet.arcscan.app/address/${process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99'}`}
+             lastFetchedAt={lastFetchedAt}
+             onRefresh={fetchProposals}
+             isLoading={isLoading}
+           />
+        </div>
+
         {/* SECTION 3 — FILTERS + SEARCH */}
         <div className="flex flex-col lg:flex-row gap-6 mb-8">
-          <div className="flex bg-gray-50 dark:bg-gray-900/50 p-1 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-x-auto no-scrollbar">
+          <div className="flex bg-gray-50 dark:bg-gray-900/50 p-1 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-x-auto no-scrollbar shrink-0">
             {['All', 'Active', 'Passed', 'Failed', 'Pending'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setFilterTab(tab)}
-                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                className={`px-5 py-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap min-h-[44px] ${
                   filterTab === tab 
                     ? 'bg-white dark:bg-[#0F1117] text-[#1D9E75] shadow-sm' 
                     : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
@@ -198,7 +226,7 @@ export default function Governance() {
             <input 
               type="text"
               placeholder="Search proposals by title..."
-              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none transition-all font-medium text-sm"
+              className="w-full pl-12 pr-4 h-12 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none transition-all font-medium text-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -207,69 +235,32 @@ export default function Governance() {
 
         {/* SECTION 4 — PROPOSAL LIST */}
         <div className="space-y-4">
+          {/* FEATURED: AIP-001 */}
+          <div className="p-8 bg-[#E1F5EE] dark:bg-[#1D9E75]/5 border-2 border-[#1D9E75] rounded-[24px] relative overflow-hidden shadow-lg shadow-[#1D9E75]/10 animate-in fade-in slide-in-from-top-4 duration-700">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-[#1D9E75] rounded-full blur-[80px] -mr-16 -mt-16 opacity-20" />
+             <div className="flex flex-wrap justify-between items-center gap-6 relative z-10">
+                <div className="space-y-2 text-center md:text-left">
+                   <div className="flex items-center justify-center md:justify-start gap-2">
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded bg-[#1D9E75] text-white uppercase tracking-widest">Featured</span>
+                      <span className="text-[10px] font-mono font-bold text-gray-400">AIP-001</span>
+                   </div>
+                   <h3 className="text-2xl font-black tracking-tight">Launch the tARC Community Token</h3>
+                   <p className="text-sm text-[#0F6E56] dark:text-[#1D9E75]/70 font-medium">ArcGov&apos;s first community reward and coordination proposal.</p>
+                </div>
+                <Link href="/governance/aip-001" className="w-full md:w-auto">
+                   <button className="w-full md:w-auto px-8 py-3 bg-[#1D9E75] text-white font-black rounded-xl hover:bg-[#0F6E56] transition-all flex items-center justify-center gap-2 shadow-md">
+                      Vote Now <ArrowRight size={18} />
+                   </button>
+                </Link>
+             </div>
+          </div>
+
           {isLoading ? (
             [1, 2, 3, 4].map(i => <SkeletonLoader key={i} height="160px" className="rounded-[24px]" />)
           ) : filteredProposals.length > 0 ? (
-            filteredProposals.map((p) => {
-              const totalVotes = Number(p.forVotes) + Number(p.againstVotes) + Number(p.abstainVotes);
-              const forPercent = totalVotes > 0 ? (Number(p.forVotes) / totalVotes) * 100 : 0;
-              const againstPercent = totalVotes > 0 ? (Number(p.againstVotes) / totalVotes) * 100 : 0;
-              const status = p.isOpen ? 'Active' : (Number(p.forVotes) > Number(p.againstVotes) ? 'Passed' : 'Failed');
-
-              return (
-                <Link key={p.id.toString()} href={`/governance/${p.id}`}>
-                  <div className="p-8 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-[24px] hover:border-[#1D9E75] transition-all group relative overflow-hidden">
-                    <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                          <span className="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-[10px] font-mono font-bold text-gray-500">
-                            #{p.id.toString().padStart(3, '0')}
-                          </span>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-wider ${CATEGORY_COLORS[p.category] || CATEGORY_COLORS[3]}`}>
-                            {CATEGORY_LABELS[p.category] || 'ECOSYSTEM'}
-                          </span>
-                        </div>
-                        <h3 className="text-xl font-bold group-hover:text-[#1D9E75] transition-colors">{p.title}</h3>
-                        <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium">
-                          <span className="flex items-center gap-1.5"><User size={14} /> Proposed by {p.proposer.slice(0, 6)}...{p.proposer.slice(-4)}</span>
-                          <span className="flex items-center gap-1.5"><Clock size={14} /> {new Date(Number(p.timestamp) * 1000).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                      
-                      <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${
-                        status === 'Active' ? 'bg-green-100 text-green-700' :
-                        status === 'Passed' ? 'bg-blue-100 text-blue-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          status === 'Active' ? 'bg-green-500 animate-pulse' :
-                          status === 'Passed' ? 'bg-blue-500' :
-                          'bg-red-500'
-                        }`} />
-                        {status === 'Active' ? '7 DAYS REMAINING' : `Voting ${status}`}
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden flex">
-                        <div className="h-full bg-[#1D9E75]" style={{ width: `${forPercent}%` }} />
-                        <div className="h-full bg-red-500" style={{ width: `${againstPercent}%` }} />
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <p className="text-[11px] font-bold text-gray-500">
-                          <span className="text-[#1D9E75]">{p.forVotes.toString()} For</span> · 
-                          <span className="text-red-500 ml-1.5">{p.againstVotes.toString()} Against</span> · 
-                          <span className="ml-1.5">{p.abstainVotes.toString()} Abstain</span>
-                        </p>
-                        <span className="text-[11px] font-black text-[#1D9E75] flex items-center gap-1 group-hover:gap-2 transition-all uppercase">
-                          View & Vote <ChevronRight size={14} />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })
+            filteredProposals.map((p) => (
+              <ProposalCard key={p.id.toString()} proposal={p} />
+            ))
           ) : (
             <div className="text-center py-24 bg-gray-50/50 dark:bg-gray-900/20 rounded-[40px] border-2 border-dashed border-gray-100 dark:border-gray-800">
                <div className="w-16 h-16 bg-white dark:bg-[#0F1117] rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100 dark:border-gray-800">
@@ -277,7 +268,7 @@ export default function Governance() {
                </div>
                <h3 className="text-xl font-bold mb-2">No proposals yet</h3>
                <p className="text-gray-500 text-sm max-w-xs mx-auto mb-8">
-                 The governance forum is open — be the first to submit a proposal to shape Arc's future.
+                 The governance forum is open — be the first to submit a proposal to shape Arc&apos;s future.
                </p>
                <button 
                  onClick={() => isConnected ? setIsModalOpen(true) : null}
@@ -292,8 +283,8 @@ export default function Governance() {
 
       {/* SECTION 5 — SUBMIT PROPOSAL MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#0F1117] w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-2xl scale-in-center">
+        <div className="fixed inset-0 z-[100] bg-white dark:bg-[#0F1117] md:bg-black/60 md:backdrop-blur-sm md:flex md:items-center md:justify-center animate-in fade-in duration-200">
+          <div className="w-full h-full md:h-auto md:max-w-2xl md:max-h-[90vh] md:overflow-y-auto md:rounded-[32px] md:border md:border-gray-100 md:dark:border-gray-800 md:shadow-2xl overflow-y-auto">
             <div className="sticky top-0 bg-white/80 dark:bg-[#0F1117]/80 backdrop-blur-md px-8 py-6 flex items-center justify-between border-b border-gray-50 dark:border-gray-900 z-10">
               <h2 className="text-2xl font-black">Submit Proposal</h2>
               <button 
@@ -313,7 +304,7 @@ export default function Governance() {
                     required
                     maxLength={100}
                     placeholder="e.g., Upgrade Validator Security Specs"
-                    className="w-full px-5 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none transition-all font-bold"
+                    className="w-full px-5 h-14 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none transition-all font-bold"
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
                   />
@@ -327,7 +318,7 @@ export default function Governance() {
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-widest text-gray-400">Category</label>
                   <select 
-                    className="w-full px-5 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none transition-all font-bold appearance-none"
+                    className="w-full px-5 h-14 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none transition-all font-bold appearance-none"
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: parseInt(e.target.value)})}
                   >
@@ -337,7 +328,7 @@ export default function Governance() {
                   </select>
                 </div>
                 <div className="flex items-end pb-1">
-                   <p className="text-[10px] text-gray-500 italic">Select the category that best fits your proposal's impact.</p>
+                   <p className="text-[10px] text-gray-500 italic">Select the category that best fits your proposal&apos;s impact.</p>
                 </div>
               </div>
 
@@ -374,14 +365,14 @@ export default function Governance() {
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-4 border-2 border-gray-100 dark:border-gray-800 font-black rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                  className="flex-1 h-14 border-2 border-gray-100 dark:border-gray-800 font-black rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
                 >
                   CANCEL
                 </button>
                 <button 
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 py-4 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 h-14 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? <Loader2 className="animate-spin" /> : 'SUBMIT PROPOSAL'}
                 </button>

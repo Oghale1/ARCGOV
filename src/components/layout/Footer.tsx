@@ -14,7 +14,13 @@ export default function Footer() {
         </div>
         <div className="flex items-center gap-4">
           <a 
-            href="https://github.com/Oghale1/ARCGOV" 
+            href="/embed" 
+            className="hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            Embed Widget
+          </a>
+          <a 
+            href="https://github.com/arcgov" 
             target="_blank" 
             rel="noopener noreferrer"
             className="hover:text-gray-900 dark:hover:text-white transition-colors"

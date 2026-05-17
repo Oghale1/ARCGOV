@@ -13,10 +13,11 @@ export async function POST(request: Request) {
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
+
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'GEMINI_API_KEY is not configured' },
-        { status: 500 }
+        { error: 'AI summary temporarily unavailable' },
+        { status: 503 }
       );
     }
 

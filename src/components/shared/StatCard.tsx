@@ -4,7 +4,7 @@ import SkeletonLoader from './SkeletonLoader';
 
 interface StatCardProps {
   label: string;
-  value: string;
+  value: React.ReactNode;
   subtext?: string;
   subtextColor?: string;
   isLoading?: boolean;

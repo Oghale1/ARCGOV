@@ -51,7 +51,7 @@ export function VoteButtons({ proposalId, isOpen }: VoteButtonsProps) {
     writeContract({
       address: ARC_GOV_CORE_ADDRESS,
       abi: ARC_GOV_CORE_ABI,
-      functionName: 'vote',
+      functionName: 'castVote',
       args: [proposalId, selectedVote],
     });
     setShowConfirm(false);

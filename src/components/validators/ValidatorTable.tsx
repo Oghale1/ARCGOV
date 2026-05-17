@@ -1,7 +1,7 @@
 // ArcGov — Built by Gemini — arcgov.xyz
 import React from 'react';
 import Link from 'next/link';
-import { QuantumBadge } from './QuantumBadge';
+import QuantumBadge from './QuantumBadge';
 import { ChevronRight, Globe, Shield } from 'lucide-react';
 
 export interface Validator {
@@ -69,7 +69,7 @@ export function ValidatorTable({ validators }: { validators: Validator[] }) {
                 {v.commission}%
               </td>
               <td className="px-6 py-5">
-                <QuantumBadge status={v.quantum} />
+                <QuantumBadge status={v.quantum as any} />
               </td>
               <td className="px-6 py-5 text-right">
                 <Link 

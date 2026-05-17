@@ -2,10 +2,11 @@
 // ArcGov — Built by Gemini — arcgov.xyz
 
 import React, { useState, useMemo } from 'react';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import TestnetBanner from '@/components/shared/TestnetBanner';
 import QuantumBadge from '@/components/validators/QuantumBadge';
+import TestnetChip from '@/components/shared/TestnetChip';
 import validators from '@/data/validators.json';
 import supabase from '@/lib/supabase';
 import { 
@@ -65,7 +66,6 @@ export default function ValidatorsPage() {
       let valA: any = a[sortBy as keyof typeof a];
       let valB: any = b[sortBy as keyof typeof b];
 
-      // Special handling for nested objects or status logic if needed
       if (sortBy === 'quantum') {
         valA = a.quantumStatus;
         valB = b.quantumStatus;
@@ -114,7 +114,7 @@ export default function ValidatorsPage() {
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to submit application. Please check if the 'validator_applications' table exists in your Supabase project.");
+      alert("Failed to submit application.");
     } finally {
       setIsSubmitting(false);
     }
@@ -129,7 +129,7 @@ export default function ValidatorsPage() {
         {/* SECTION 2 — HERO */}
         <section className="mb-16">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-12">
-            <div className="max-w-2xl">
+            <div className="max-w-2xl text-center md:text-left">
               <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">Arc Validator Network</h1>
               <p className="text-lg text-gray-500 dark:text-gray-400">
                 8 institutional validators securing the Arc blockchain with sub-second finality and quantum-ready infrastructure.
@@ -137,25 +137,25 @@ export default function ValidatorsPage() {
             </div>
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="px-8 py-4 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all active:scale-95 shadow-lg shadow-[#1D9E75]/20 whitespace-nowrap"
+              className="w-full md:w-auto px-8 py-4 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all active:scale-95 shadow-lg shadow-[#1D9E75]/20 whitespace-nowrap h-14"
             >
               APPLY AS VALIDATOR
             </button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { label: 'Total Validators', value: '8', icon: ShieldCheck },
               { label: 'Average Uptime', value: `${avgUptime}%`, icon: Activity },
               { label: 'Quantum Ready', value: `${quantumReadyCount}/8`, icon: Cpu },
-              { label: 'Total Staked', value: '0 USDC (Testnet)', icon: Lock },
+              { label: 'Total Staked', value: <span className="flex items-center gap-1">0 USDC <TestnetChip /></span>, icon: Lock },
             ].map((s) => (
               <div key={s.label} className="p-6 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-[24px] flex flex-col gap-1">
                 <div className="flex items-center gap-2 mb-2 text-[#1D9E75]">
                   <s.icon size={16} />
                   <span className="text-[10px] font-black uppercase tracking-widest">{s.label}</span>
                 </div>
-                <p className="text-2xl font-black">{s.value}</p>
+                <div className="text-2xl font-black">{s.value}</div>
               </div>
             ))}
           </div>
@@ -168,7 +168,7 @@ export default function ValidatorsPage() {
             <input 
               type="text"
               placeholder="Filter by name or country..."
-              className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl outline-none focus:ring-2 focus:ring-[#1D9E75] transition-all text-sm font-bold"
+              className="w-full pl-12 pr-4 h-12 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl outline-none focus:ring-2 focus:ring-[#1D9E75] transition-all text-sm font-bold"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -176,14 +176,14 @@ export default function ValidatorsPage() {
 
           <div className="flex flex-wrap gap-2">
             <select 
-              className="px-4 py-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl outline-none text-xs font-bold"
+              className="px-4 h-12 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl outline-none text-xs font-bold"
               value={countryFilter}
               onChange={(e) => setCountryFilter(e.target.value)}
             >
               {countries.map(c => <option key={c} value={c}>{c.toUpperCase()}</option>)}
             </select>
             <select 
-              className="px-4 py-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl outline-none text-xs font-bold"
+              className="px-4 h-12 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl outline-none text-xs font-bold"
               value={quantumFilter}
               onChange={(e) => setQuantumFilter(e.target.value)}
             >
@@ -204,7 +204,7 @@ export default function ValidatorsPage() {
               <button
                 key={btn.key}
                 onClick={() => toggleSort(btn.key)}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-4 h-10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                   sortBy === btn.key 
                     ? 'bg-white dark:bg-[#0F1117] text-[#1D9E75] shadow-sm' 
                     : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
@@ -258,7 +258,11 @@ export default function ValidatorsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-6 text-sm font-bold font-mono">{v.commission}%</td>
-                  <td className="px-6 py-6 text-[10px] font-black text-gray-400 uppercase tracking-tighter">0 USDC TESTNET</td>
+                  <td className="px-6 py-6">
+                     <div className="flex items-center gap-1 text-[10px] font-black text-gray-400 uppercase">
+                       0 USDC <TestnetChip />
+                     </div>
+                  </td>
                   <td className="px-6 py-6">
                     <QuantumBadge status={v.quantumStatus as any} />
                   </td>
@@ -270,7 +274,7 @@ export default function ValidatorsPage() {
                   <td className="px-6 py-6 text-right">
                     <Link 
                       href={`/validators/${v.id}`}
-                      className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 text-[10px] font-black uppercase hover:bg-[#1D9E75] hover:text-white transition-all"
+                      className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 text-[10px] font-black uppercase hover:bg-[#1D9E75] hover:text-white transition-all h-10"
                     >
                       VIEW PROFILE <ChevronRight size={14} />
                     </Link>
@@ -309,7 +313,7 @@ export default function ValidatorsPage() {
                </div>
                <Link 
                 href={`/validators/${v.id}`}
-                className="w-full py-4 bg-gray-50 dark:bg-gray-900 text-[10px] font-black uppercase rounded-xl flex items-center justify-center gap-2 hover:bg-[#1D9E75] hover:text-white transition-all"
+                className="w-full h-14 bg-gray-50 dark:bg-gray-900 text-[10px] font-black uppercase rounded-xl flex items-center justify-center gap-2 hover:bg-[#1D9E75] hover:text-white transition-all"
                >
                  VIEW PROFILE <ChevronRight size={14} />
                </Link>
@@ -320,8 +324,8 @@ export default function ValidatorsPage() {
 
       {/* SECTION 5 — VALIDATOR APPLICATION MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#0F1117] w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-2xl scale-in-center">
+        <div className="fixed inset-0 z-[100] bg-white dark:bg-[#0F1117] md:bg-black/60 md:backdrop-blur-sm md:flex md:items-center md:justify-center animate-in fade-in duration-200">
+          <div className="w-full h-full md:h-auto md:max-w-2xl md:max-h-[90vh] md:rounded-[32px] md:border md:border-gray-100 md:dark:border-gray-800 md:shadow-2xl overflow-y-auto">
             <div className="sticky top-0 bg-white/80 dark:bg-[#0F1117]/80 backdrop-blur-md px-8 py-6 flex items-center justify-between border-b border-gray-50 dark:border-gray-900 z-10">
               <h2 className="text-2xl font-black">Validator Application</h2>
               <button 
@@ -347,7 +351,7 @@ export default function ValidatorsPage() {
                  </div>
                  <button 
                   onClick={() => { setIsModalOpen(false); setSubmissionId(null); }}
-                  className="w-full py-4 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all"
+                  className="w-full h-14 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all"
                  >
                    CLOSE
                  </button>
@@ -359,7 +363,7 @@ export default function ValidatorsPage() {
                     <label className="text-xs font-black uppercase tracking-widest text-gray-400">Institution Name</label>
                     <input 
                       type="text" required placeholder="e.g., Circle Digital Labs"
-                      className="w-full px-5 py-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-bold"
+                      className="w-full px-5 h-12 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-bold"
                       value={formData.institution_name}
                       onChange={e => setFormData({...formData, institution_name: e.target.value})}
                     />
@@ -368,7 +372,7 @@ export default function ValidatorsPage() {
                     <label className="text-xs font-black uppercase tracking-widest text-gray-400">Country / Jurisdiction</label>
                     <input 
                       type="text" required placeholder="e.g., Switzerland"
-                      className="w-full px-5 py-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-bold"
+                      className="w-full px-5 h-12 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-bold"
                       value={formData.country}
                       onChange={e => setFormData({...formData, country: e.target.value})}
                     />
@@ -379,7 +383,7 @@ export default function ValidatorsPage() {
                   <label className="text-xs font-black uppercase tracking-widest text-gray-400">Technical Contact Email</label>
                   <input 
                     type="email" required placeholder="tech@institution.com"
-                    className="w-full px-5 py-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-bold"
+                    className="w-full px-5 h-12 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-bold"
                     value={formData.email}
                     onChange={e => setFormData({...formData, email: e.target.value})}
                   />
@@ -389,7 +393,7 @@ export default function ValidatorsPage() {
                   <label className="text-xs font-black uppercase tracking-widest text-gray-400">Node Infrastructure Description</label>
                   <textarea 
                     required rows={3} placeholder="Describe your hosting environment, cloud providers, and HSM setup..."
-                    className="w-full px-5 py-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-medium text-sm"
+                    className="w-full px-5 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-medium text-sm"
                     value={formData.infrastructure_description}
                     onChange={e => setFormData({...formData, infrastructure_description: e.target.value})}
                   />
@@ -398,7 +402,7 @@ export default function ValidatorsPage() {
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-widest text-gray-400">Quantum Readiness Status</label>
                   <select 
-                    className="w-full px-5 py-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-bold appearance-none"
+                    className="w-full px-5 h-12 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-bold appearance-none"
                     value={formData.quantum_status}
                     onChange={e => setFormData({...formData, quantum_status: e.target.value})}
                   >
@@ -413,7 +417,7 @@ export default function ValidatorsPage() {
                   <label className="text-xs font-black uppercase tracking-widest text-gray-400">Blockchain Validator Experience</label>
                   <textarea 
                     required rows={3} placeholder="Which networks do you currently validate?"
-                    className="w-full px-5 py-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-medium text-sm"
+                    className="w-full px-5 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-medium text-sm"
                     value={formData.experience}
                     onChange={e => setFormData({...formData, experience: e.target.value})}
                   />
@@ -423,7 +427,7 @@ export default function ValidatorsPage() {
                   <label className="text-xs font-black uppercase tracking-widest text-gray-400">Message to Arc Team (Optional)</label>
                   <textarea 
                     rows={2} placeholder="Any additional context..."
-                    className="w-full px-5 py-3.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-medium text-sm"
+                    className="w-full px-5 py-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none font-medium text-sm"
                     value={formData.message}
                     onChange={e => setFormData({...formData, message: e.target.value})}
                   />
@@ -433,14 +437,14 @@ export default function ValidatorsPage() {
                   <button 
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-4 border-2 border-gray-100 dark:border-gray-800 font-black rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all uppercase tracking-widest text-xs"
+                    className="flex-1 h-14 border-2 border-gray-100 dark:border-gray-800 font-black rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all uppercase tracking-widest text-xs"
                   >
                     Cancel
                   </button>
                   <button 
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 py-4 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all disabled:opacity-50 flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+                    className="flex-1 h-14 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all disabled:opacity-50 flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
                   >
                     {isSubmitting ? <Loader2 className="animate-spin" /> : 'SUBMIT APPLICATION'}
                   </button>

@@ -10,19 +10,25 @@ import {
 // Arc Testnet Configuration
 const ARC_CHAIN_ID = 5042002;
 const ARC_RPC_URL = 'https://rpc.testnet.arc.network';
-const CONTRACT_ADDRESS = '0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99' as `0x${string}`;
+export const ARC_GOV_CORE_ADDRESS = '0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99' as `0x${string}`;
 
 // Full ABI inline
-export const ARCGovCoreABI = parseAbi([
+export const ARC_GOV_CORE_ABI = parseAbi([
+  "struct Proposal { uint256 id; string title; string description; uint8 category; string ipfsHash; address proposer; uint256 createdAt; uint256 votingDeadline; uint256 forVotes; uint256 againstVotes; uint256 abstainVotes; bool isOpen; }",
   "function submitProposal(string title, string description, uint8 category, string ipfsHash) returns (uint256)",
   "function castVote(uint256 proposalId, uint8 voteType) returns (bool)",
-  "function getProposal(uint256 id) view returns (uint256 id, string title, string description, uint8 category, address proposer, uint256 timestamp, uint256 forVotes, uint256 againstVotes, uint256 abstainVotes, bool isOpen)",
-  "function getAllProposals() view returns (tuple(uint256 id, string title, string description, uint8 category, address proposer, uint256 timestamp, uint256 forVotes, uint256 againstVotes, uint256 abstainVotes, bool isOpen)[])",
-  "function hasVoted(uint256 proposalId, address voter) view returns (bool)",
+  "function getProposal(uint256 id) view returns (Proposal)",
+  "function getAllProposals() view returns (Proposal[])",
+  "function hasVotedOn(uint256 proposalId, address voter) view returns (bool)",
   "function getProposalCount() view returns (uint256)",
-  "event ProposalCreated(uint256 indexed id, address indexed proposer, string title)",
-  "event VoteCast(uint256 indexed proposalId, address indexed voter, uint8 voteType)"
+  "function getVoterChoice(uint256 proposalId, address voter) view returns (uint8)",
+  "event ProposalCreated(uint256 indexed id, address indexed proposer, string title, uint8 category, uint256 votingDeadline)",
+  "event VoteCast(uint256 indexed proposalId, address indexed voter, uint8 voteType, uint256 newForVotes, uint256 newAgainstVotes, uint256 newAbstainVotes)"
 ]);
+
+// Deprecated aliases for backward compatibility if any
+export const ARCGovCoreABI = ARC_GOV_CORE_ABI;
+const CONTRACT_ADDRESS = ARC_GOV_CORE_ADDRESS;
 
 // Initialize Public Client
 const publicClient = createPublicClient({
@@ -32,14 +38,14 @@ const publicClient = createPublicClient({
 /**
  * Fetches all proposals from the contract
  */
-export async function getAllProposals() {
+export async function getAllProposals(): Promise<any[]> {
   try {
     const proposals = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
       abi: ARCGovCoreABI,
       functionName: 'getAllProposals',
     });
-    return proposals;
+    return proposals as any[];
   } catch (error) {
     console.error('Error in getAllProposals:', error);
     return [];
@@ -49,7 +55,7 @@ export async function getAllProposals() {
 /**
  * Fetches a single proposal by ID
  */
-export async function getProposal(id: number) {
+export async function getProposal(id: number): Promise<any> {
   try {
     const proposal = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
@@ -90,13 +96,33 @@ export async function hasVoted(proposalId: number, address: string): Promise<boo
     const voted = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
       abi: ARCGovCoreABI,
-      functionName: 'hasVoted',
+      functionName: 'hasVotedOn',
       args: [BigInt(proposalId), address as `0x${string}`],
     });
-    return voted;
+    return voted as boolean;
   } catch (error) {
     console.error(`Error in hasVoted(${proposalId}):`, error);
     return false;
+  }
+}
+
+/**
+ * Returns the specific vote choice made by a voter on a proposal
+ * Returns 0=FOR, 1=AGAINST, 2=ABSTAIN
+ */
+export async function getVoterChoice(proposalId: number, address: string): Promise<number> {
+  if (!address || !address.startsWith('0x')) return 0;
+  try {
+    const choice = await publicClient.readContract({
+      address: CONTRACT_ADDRESS,
+      abi: ARCGovCoreABI,
+      functionName: 'getVoterChoice',
+      args: [BigInt(proposalId), address as `0x${string}`],
+    });
+    return Number(choice);
+  } catch (error) {
+    console.error(`Error in getVoterChoice(${proposalId}):`, error);
+    return 0;
   }
 }
 
