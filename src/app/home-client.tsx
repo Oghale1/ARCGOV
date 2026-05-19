@@ -27,14 +27,11 @@ import { getNetworkStats, NetworkStats } from '@/lib/arc-rpc';
 // Components
 import StatCard from '@/components/shared/StatCard';
 import SkeletonLoader from '@/components/shared/SkeletonLoader';
-import TestnetBanner from '@/components/shared/TestnetBanner';
 import QuantumBadge from '@/components/validators/QuantumBadge';
 import ActivityFeed from '@/components/shared/ActivityFeed';
 import NetworkError from '@/components/shared/NetworkError';
 import VerifiedBadge from '@/components/shared/VerifiedBadge';
 import TestnetChip from '@/components/shared/TestnetChip';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 
 export default function Home() {
   const [networkStats, setNetworkStats] = useState<NetworkStats | null>(null);
@@ -134,21 +131,16 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col bg-white dark:bg-[#0F1117] text-gray-900 dark:text-white">
-        <Navbar />
+      <div className="flex flex-col text-gray-900 dark:text-white">
         <div className="flex-grow flex items-center justify-center p-4">
           <NetworkError message={error} onRetry={fetchData} />
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-[#0F1117] text-gray-900 dark:text-white">
-      <TestnetBanner />
-      <Navbar />
-
+    <div className="flex flex-col text-gray-900 dark:text-white">
       {/* SECTION 1 — NETWORK BAR */}
       <div className="w-full border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 py-3 md:py-2">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] md:text-[11px] font-black tracking-wider uppercase text-gray-500">
@@ -480,8 +472,6 @@ export default function Home() {
            </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 }

@@ -2,8 +2,6 @@
 // ArcGov — Built by Gemini — arcgov.xyz
 
 import React, { useState, useEffect, useMemo } from 'react';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import { 
   Search, 
   Plus, 
@@ -142,8 +140,6 @@ export default function Governance() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-[#0F1117] text-gray-900 dark:text-white">
-      <Navbar />
-
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         {/* SECTION 1 — HERO */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12 text-center md:text-left">
@@ -381,8 +377,6 @@ export default function Governance() {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 }

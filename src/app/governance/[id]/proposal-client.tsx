@@ -3,8 +3,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import { 
   ArrowLeft, 
   ChevronRight, 
@@ -178,19 +176,15 @@ export default function ProposalClient() {
   if (error) {
     return (
       <div className="flex flex-col min-h-screen bg-white dark:bg-[#0F1117]">
-        <Navbar />
         <main className="flex-grow flex items-center justify-center p-4">
            <NetworkError message={error} onRetry={fetchProposalData} />
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-[#0F1117] text-gray-900 dark:text-white">
-      <Navbar />
-
       <main className="flex-grow max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         <Link href="/governance" className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-[#1D9E75] transition-all mb-10 group">
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
@@ -409,8 +403,6 @@ export default function ProposalClient() {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 }

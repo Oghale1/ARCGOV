@@ -2,23 +2,6 @@
 // ArcGov — Built by Gemini — arcgov.xyz
 
 import React, { useState, useEffect, useMemo } from 'react';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import { 
-  Coins, 
-  ArrowRight, 
-  Bell, 
-  Calculator, 
-  Info, 
-  Clock, 
-  ShieldCheck, 
-  CheckCircle2, 
-  AlertCircle,
-  ChevronRight,
-  Loader2,
-  Mail,
-  Wallet
-} from 'lucide-react';
 import { useAccount } from 'wagmi';
 import Link from 'next/link';
 
@@ -172,9 +155,7 @@ export default function Staking() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-[#0F1117] text-gray-900 dark:text-white">
-      <Navbar />
-
+    <div className="flex flex-col text-gray-900 dark:text-white">
       {/* SECTION 1 — TESTNET NOTICE */}
       <div className="bg-amber-50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-900/30 py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center gap-2 text-center">
@@ -477,9 +458,8 @@ export default function Staking() {
               )}
            </div>
         </section>
-      </main>
+        </main>
+        </div>
+        );
+        }
 
-      <Footer />
-    </div>
-  );
-}

@@ -2,8 +2,6 @@
 // ArcGov — Built by Gemini — arcgov.xyz
 
 import React, { useState, useMemo } from 'react';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import { 
   ShieldCheck, 
   Cpu, 
@@ -87,9 +85,7 @@ export default function QuantumReadiness() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-[#0F1117] text-gray-900 dark:text-white">
-      <Navbar />
-
+    <div className="flex flex-col text-gray-900 dark:text-white">
       <main className="flex-grow">
         {/* SECTION 1 — HERO */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
@@ -336,9 +332,8 @@ export default function QuantumReadiness() {
               )}
            </div>
         </section>
-      </main>
+        </main>
+        </div>
+        );
+        }
 
-      <Footer />
-    </div>
-  );
-}

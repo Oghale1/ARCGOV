@@ -2,8 +2,6 @@
 // ArcGov — Built by Gemini — arcgov.xyz
 
 import React, { useState, useEffect, useMemo } from 'react';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -160,7 +158,6 @@ export default function GovernanceCalendar() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-[#0F1117] text-gray-900 dark:text-white">
-      <Navbar />
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         <Link href="/governance" className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-[#1D9E75] transition-all mb-8 group min-h-[44px]">
            <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
@@ -230,7 +227,6 @@ export default function GovernanceCalendar() {
           </div>
         )}
       </main>
-      <Footer />
     </div>
   );
 }

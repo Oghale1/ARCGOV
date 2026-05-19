@@ -53,8 +53,6 @@ import { useToast } from '@/components/shared/Toast';
 import SkeletonLoader from '@/components/shared/SkeletonLoader';
 import VerifiedBadge from '@/components/shared/VerifiedBadge';
 import TestnetChip from '@/components/shared/TestnetChip';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 
 // Constants
 const CONTRACT_ADDRESS = '0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99' as `0x${string}`;
@@ -238,7 +236,6 @@ export default function MyDashboard() {
   if (!isConnected) {
     return (
       <div className="flex flex-col min-h-screen bg-white dark:bg-[#0F1117] text-gray-900 dark:text-white">
-        <Navbar />
         <main className="flex-grow flex flex-col items-center justify-center p-4 py-20">
           <div className="max-w-2xl w-full text-center space-y-12">
             <div className="space-y-4">
@@ -273,15 +270,12 @@ export default function MyDashboard() {
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-[#0F1117] text-gray-900 dark:text-white">
-      <Navbar />
-
       {/* CONNECTED TOP BAR */}
       <div className="w-full border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -706,8 +700,6 @@ export default function MyDashboard() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

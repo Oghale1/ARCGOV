@@ -2,8 +2,6 @@
 // ArcGov — Built by Gemini — arcgov.xyz
 
 import React, { useState, useEffect, useMemo } from 'react';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import { 
   ArrowLeft, 
   ChevronRight, 
@@ -208,8 +206,6 @@ Vote NO to reject this proposal.`;
 
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-[#0F1117] text-gray-900 dark:text-white">
-      <Navbar />
-
       <main className="flex-grow max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         {/* SECTION 1 — HEADER */}
         <nav className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-10">
@@ -509,8 +505,6 @@ Vote NO to reject this proposal.`;
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 }

@@ -43,8 +43,6 @@ import {
   ValidatorActivity
 } from '@/lib/validator-stats';
 import QuantumBadge from '@/components/validators/QuantumBadge';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import SkeletonLoader from '@/components/shared/SkeletonLoader';
 import NetworkError from '@/components/shared/NetworkError';
 import VerifiedBadge from '@/components/shared/VerifiedBadge';
@@ -116,8 +114,7 @@ export default function ValidatorClient() {
 
   if (!validator) {
     return (
-      <div className="min-h-screen flex flex-col bg-white dark:bg-[#0F1117]">
-        <Navbar />
+      <div className="flex flex-col">
         <main className="flex-grow flex flex-col items-center justify-center p-4">
           <AlertTriangle size={64} className="text-gray-200 mb-6" />
           <h2 className="text-2xl font-black mb-2">Validator Not Found</h2>
@@ -126,7 +123,6 @@ export default function ValidatorClient() {
             Back to Network
           </Link>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -162,9 +158,7 @@ export default function ValidatorClient() {
   const isPlaceholderAddress = validator.validatorAddress?.startsWith("0x100000000000000000000000") || !validator.validatorAddress;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-[#0F1117] text-gray-900 dark:text-white">
-      <Navbar />
-
+    <div className="flex flex-col text-gray-900 dark:text-white">
       <main className="flex-grow max-w-5xl mx-auto px-4 sm:px-6 py-12 w-full">
         {/* BACK LINK */}
         <Link href="/validators" className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-[#1D9E75] transition-all mb-10 group">
@@ -504,8 +498,6 @@ export default function ValidatorClient() {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 }
