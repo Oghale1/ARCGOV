@@ -39,7 +39,7 @@ export default function Navbar() {
   const { theme, setTheme } = useTheme();
   const publicClient = usePublicClient();
   const [mounted, setMounted] = React.useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Notification State
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -62,7 +62,7 @@ export default function Navbar() {
         setIsNotifOpen(false);
       }
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node) && !(event.target as HTMLElement).closest('button[aria-label="Toggle menu"]')) {
-        setIsMenuOpen(false);
+        setMobileMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -268,16 +268,16 @@ export default function Navbar() {
 
         {/* Mobile Menu Toggle */}
         <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
           aria-label="Toggle menu"
         >
-          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
       {/* Mobile Dropdown */}
-      {isMenuOpen && (
+      {mobileMenuOpen && (
         <div 
           ref={mobileMenuRef}
           className="absolute top-[56px] left-0 w-full h-[calc(100vh-56px)] bg-white dark:bg-[#0F1117] flex flex-col p-6 gap-6 z-40 md:hidden"
@@ -288,7 +288,7 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                onClick={() => setIsMenuOpen(false)}
+                onClick={() => setMobileMenuOpen(false)}
                 className={`text-2xl font-semibold ${
                   isActive ? 'text-[#1D9E75]' : 'text-gray-500 dark:text-gray-400'
                 }`}

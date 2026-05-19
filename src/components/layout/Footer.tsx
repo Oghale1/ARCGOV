@@ -1,5 +1,6 @@
 // ArcGov — arcgov.vercel.app
 import React from 'react';
+import Link from 'next/link';
 
 export default function Footer() {
   return (
@@ -13,12 +14,12 @@ export default function Footer() {
           <span>Chain ID 5042002</span>
         </div>
         <div className="flex items-center gap-4">
-          <a 
+          <Link 
             href="/embed" 
             className="hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             Embed Widget
-          </a>
+          </Link>
           <a 
             href="https://github.com/arcgov" 
             target="_blank" 
