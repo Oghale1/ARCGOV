@@ -364,7 +364,7 @@ export default function ProposalClient() {
             <div className="mt-12 pt-8 border-t border-gray-50 dark:border-gray-900/50">
                <VerifiedBadge 
                  explorerUrl={`https://testnet.arcscan.app/address/${proposal.proposer}`}
-                 blockNumber={proposal.id.toString()} 
+                 blockNumber={blockNumber} 
                  lastFetchedAt={lastFetchedAt}
                  onRefresh={fetchProposalData}
                  isLoading={isLoading}
@@ -398,6 +398,15 @@ export default function ProposalClient() {
                 className="flex-1 py-4 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all text-sm h-14"
               >
                 CONFIRM VOTE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+FIRM VOTE
               </button>
             </div>
           </div>

@@ -438,6 +438,7 @@ export default function MyDashboard() {
                     <div className="pb-4 border-b border-gray-50 dark:border-gray-900/50">
                        <VerifiedBadge 
                          explorerUrl={`https://testnet.arcscan.app/address/${CONTRACT_ADDRESS}`}
+                         blockNumber={blockNumber}
                          lastFetchedAt={lastFetchedAt}
                          onRefresh={fetchDashboardData}
                          isLoading={isLoading}

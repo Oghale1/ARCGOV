@@ -306,12 +306,13 @@ export default function ValidatorClient() {
         <div className="mb-12 border-b border-gray-50 dark:border-gray-900/50 pb-4">
            <VerifiedBadge 
              explorerUrl={`https://testnet.arcscan.app/address/${validator.validatorAddress}`}
-             blockNumber={networkStats?.totalBlocks}
+             blockNumber={blockNumber}
              lastFetchedAt={lastFetchedAt}
              onRefresh={fetchLiveData}
              isLoading={isLoadingLive}
            />
         </div>
+
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2 space-y-12">
@@ -495,6 +496,13 @@ export default function ValidatorClient() {
                 </button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+      )}
           </div>
         </div>
       )}

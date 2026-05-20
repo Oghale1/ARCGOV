@@ -120,6 +120,17 @@ export default function ValidatorsPage() {
   return (
     <div className="flex flex-col text-gray-900 dark:text-white">
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+        {/* VERIFIED BADGE */}
+        <div className="mb-12 border-b border-gray-50 dark:border-gray-900/50 pb-4">
+           <VerifiedBadge 
+             explorerUrl="https://testnet.arcscan.app"
+             blockNumber={blockNumber}
+             lastFetchedAt={lastFetchedAt}
+             onRefresh={fetchData}
+             isLoading={isLoading}
+           />
+        </div>
+
         {/* SECTION 2 — HERO */}
         <section className="mb-16">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-12">

@@ -37,12 +37,17 @@ export default function Home() {
   const [networkStats, setNetworkStats] = useState<NetworkStats | null>(null);
   const [proposals, setProposals] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
+  const [lastKnownBlock, setLastKnownBlock] = useState<string | null>(null);
+  const [fetchStatus, setFetchStatus] = useState<'success' | 'error'>('success');
 
   // --- FETCH DATA ---
-  const fetchData = async () => {
-    setIsLoading(true);
+  const fetchData = async (isManual = true) => {
+    if (isManual) setIsLoading(true);
+    else setIsRefreshing(true);
+    
     setError(null);
     try {
       const [stats, allProposals] = await Promise.all([
@@ -52,11 +57,15 @@ export default function Home() {
       setNetworkStats(stats);
       setProposals((allProposals as any[]) || []);
       setLastFetchedAt(new Date());
+      setLastKnownBlock(stats.blockNumber);
+      setFetchStatus('success');
     } catch (err) {
       console.error("Data fetch error:", err);
-      setError("Unable to sync with Arc Testnet nodes.");
+      setFetchStatus('error');
+      if (isManual) setError("Unable to sync with Arc Testnet nodes.");
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -64,13 +73,8 @@ export default function Home() {
     fetchData();
 
     // Refresh network stats every 30 seconds
-    const interval = setInterval(async () => {
-      try {
-        const stats = await getNetworkStats();
-        setNetworkStats(stats);
-      } catch (err) {
-        console.warn("Network stats refresh failed");
-      }
+    const interval = setInterval(() => {
+      fetchData(false);
     }, 30000);
 
     return () => clearInterval(interval);
@@ -173,10 +177,10 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-gray-50 dark:border-gray-900/50">
          <VerifiedBadge 
            explorerUrl="https://testnet.arcscan.app" 
-           blockNumber={networkStats?.blockNumber} 
+           blockNumber={fetchStatus === 'error' ? `~${lastKnownBlock}` : networkStats?.blockNumber} 
            lastFetchedAt={lastFetchedAt} 
-           onRefresh={fetchData}
-           isLoading={isLoading}
+           onRefresh={() => fetchData(false)}
+           isLoading={isLoading || isRefreshing}
          />
       </div>
 
@@ -468,6 +472,14 @@ export default function Home() {
               <h3 className="text-xl font-bold">Staking</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                 Earn USDC rewards by delegating your Arc tokens to top-tier validators once mainnet launches.
+              </p>
+           </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+-tier validators once mainnet launches.
               </p>
            </div>
         </section>

@@ -10,7 +10,7 @@ import {
 // Arc Testnet Configuration
 const ARC_CHAIN_ID = 5042002;
 const ARC_RPC_URL = 'https://rpc.testnet.arc.network';
-export const ARC_GOV_CORE_ADDRESS = '0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99' as `0x${string}`;
+export const ARC_GOV_CORE_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99') as `0x${string}`;
 
 // Full ABI inline
 export const ARC_GOV_CORE_ABI = parseAbi([

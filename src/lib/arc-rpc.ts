@@ -19,15 +19,23 @@ export interface NetworkStats {
 
 /**
  * Gets the current block number from Arc Testnet
- * @returns Formatted block number string with commas
+ * @returns BigInt block number
  */
-export async function getBlockNumber(): Promise<string> {
+export async function getBlockNumber(): Promise<bigint | null> {
   try {
-    const blockNumber = await publicClient.getBlockNumber();
-    return blockNumber.toLocaleString();
+    return await publicClient.getBlockNumber();
   } catch (error) {
-    return "0";
+    console.error('Error fetching block number:', error);
+    return null;
   }
+}
+
+/**
+ * Gets the current block number as a formatted string
+ */
+export async function getBlockNumberFormatted(): Promise<string> {
+  const block = await getBlockNumber();
+  return block ? block.toLocaleString() : "0";
 }
 
 /**
@@ -35,7 +43,7 @@ export async function getBlockNumber(): Promise<string> {
  */
 export async function getNetworkStats(): Promise<NetworkStats> {
   try {
-    const blockNumber = await getBlockNumber();
+    const blockNumber = await getBlockNumberFormatted();
     return {
       blockNumber,
       finality: "~0.78s",

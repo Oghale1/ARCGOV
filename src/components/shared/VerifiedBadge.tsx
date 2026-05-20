@@ -44,9 +44,9 @@ export default function VerifiedBadge({
       
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5 text-[9px] font-bold text-gray-400 uppercase tracking-tighter">
-           <span>Block #{blockNumber || '—'}</span>
-           <span className="w-1 h-1 rounded-full bg-gray-200 dark:bg-gray-800" />
-           <span>Updated {formatDistanceToNow(lastFetchedAt)} ago</span>
+           <span className="shrink-0">Block {blockNumber ? `#${blockNumber}` : '—'}</span>
+           <span className="w-1 h-1 rounded-full bg-gray-200 dark:bg-gray-800 shrink-0" />
+           <span className="whitespace-nowrap">Updated {formatDistanceToNow(lastFetchedAt, { addSuffix: true })}</span>
         </div>
 
         {onRefresh && (

@@ -72,17 +72,31 @@ export default function Staking() {
   // --- FETCH AIP-001 STATUS ---
   useEffect(() => {
     async function fetchAIP() {
+      setIsLoadingProposal(true);
+      
+      // 5 second timeout logic
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      );
+
       try {
-        const proposals = await getAllProposals();
+        const proposals: any = await Promise.race([
+          getAllProposals(),
+          timeoutPromise
+        ]);
+        
         if (proposals && proposals.length > 0) {
           const found = (proposals as any[]).find(p => 
             p.title.toUpperCase().includes('AIP-001') || 
             p.title.toUpperCase().includes('TARC TOKEN')
           );
           setAipProposal(found || null);
+        } else {
+          setAipProposal(null);
         }
       } catch (err) {
         console.error("Failed to fetch AIP-001 status", err);
+        setAipProposal(null); // Fallback to 'not found'
       } finally {
         setIsLoadingProposal(false);
       }

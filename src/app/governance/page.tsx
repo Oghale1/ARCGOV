@@ -19,6 +19,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { getAllProposals, submitProposal } from '@/lib/contract';
+import { getBlockNumberFormatted } from '@/lib/arc-rpc';
 import { useAccount, useWalletClient, usePublicClient, useChainId } from 'wagmi';
 import { useToast } from '@/components/shared/Toast';
 import Link from 'next/link';
@@ -42,6 +43,7 @@ export default function Governance() {
   const [filterTab, setFilterTab] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
+  const [blockNumber, setBlockNumber] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -55,8 +57,12 @@ export default function Governance() {
   const fetchProposals = async () => {
     setIsLoading(true);
     try {
-      const all = await getAllProposals();
+      const [all, block] = await Promise.all([
+        getAllProposals(),
+        getBlockNumberFormatted()
+      ]);
       setProposals((all as any[]) || []);
+      setBlockNumber(block);
       setLastFetchedAt(new Date());
     } catch (err) {
       console.error(err);
@@ -194,6 +200,7 @@ export default function Governance() {
         <div className="mb-12 border-b border-gray-50 dark:border-gray-900/50 pb-4">
            <VerifiedBadge 
              explorerUrl={`https://testnet.arcscan.app/address/${process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99'}`}
+             blockNumber={blockNumber}
              lastFetchedAt={lastFetchedAt}
              onRefresh={fetchProposals}
              isLoading={isLoading}
