@@ -38,31 +38,44 @@ export default function ActivityFeed({ maxItems = 10 }: { maxItems?: number }) {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   const fetchActivity = React.useCallback(async () => {
-    if (!publicClient) return;
+    if (!publicClient) {
+      setIsConnected(false);
+      return;
+    }
+
+    // 10 second timeout logic
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout')), 10000)
+    );
 
     try {
+      setIsConnected(true);
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock - BigInt(50) > BigInt(0) ? currentBlock - BigInt(50) : BigInt(0);
+      const fromBlock = currentBlock - BigInt(100) > BigInt(0) ? currentBlock - BigInt(100) : BigInt(0);
 
-      // Fetch ProposalCreated events
-      const proposalLogs = await publicClient.getContractEvents({
-        address: CONTRACT_ADDRESS,
-        abi: ARCGovCoreABI,
-        eventName: 'ProposalCreated',
-        fromBlock,
-        toBlock: currentBlock
-      });
-
-      // Fetch VoteCast events
-      const voteLogs = await publicClient.getContractEvents({
-        address: CONTRACT_ADDRESS,
-        abi: ARCGovCoreABI,
-        eventName: 'VoteCast',
-        fromBlock,
-        toBlock: currentBlock
-      });
+      // Fetch logs with timeout
+      const [proposalLogs, voteLogs]: [any[], any[]] = await Promise.race([
+        Promise.all([
+          publicClient.getContractEvents({
+            address: CONTRACT_ADDRESS,
+            abi: ARCGovCoreABI,
+            eventName: 'ProposalCreated',
+            fromBlock,
+            toBlock: currentBlock
+          }),
+          publicClient.getContractEvents({
+            address: CONTRACT_ADDRESS,
+            abi: ARCGovCoreABI,
+            eventName: 'VoteCast',
+            fromBlock,
+            toBlock: currentBlock
+          })
+        ]),
+        timeoutPromise as Promise<any>
+      ]);
 
       // Merge and format
       const formattedProposals: ActivityEvent[] = proposalLogs.map((log: any) => ({
@@ -71,7 +84,7 @@ export default function ActivityFeed({ maxItems = 10 }: { maxItems?: number }) {
         proposalId: Number(log.args.proposalId),
         title: log.args.title,
         actor: log.args.proposer,
-        timestamp: Date.now(), // Realistically would need getBlock per log for exact time
+        timestamp: Date.now(), 
         hash: log.transactionHash,
         blockNumber: log.blockNumber
       }));
@@ -95,6 +108,7 @@ export default function ActivityFeed({ maxItems = 10 }: { maxItems?: number }) {
       setError(null);
     } catch (err) {
       console.error("Activity feed fetch error:", err);
+      setIsConnected(false);
       setError("Activity feed temporarily offline");
     } finally {
       setIsLoading(false);
@@ -116,7 +130,7 @@ export default function ActivityFeed({ maxItems = 10 }: { maxItems?: number }) {
     );
   }
 
-  if (error) {
+  if (error && events.length === 0) {
     return (
       <div className="flex items-center justify-center py-12 text-amber-500 gap-2 bg-amber-50 dark:bg-amber-900/10 rounded-3xl border border-amber-100 dark:border-amber-900/20">
         <AlertCircle size={18} />
@@ -127,72 +141,83 @@ export default function ActivityFeed({ maxItems = 10 }: { maxItems?: number }) {
 
   if (events.length === 0) {
     return (
-      <div className="p-12 text-center border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-[40px] space-y-4">
+      <div className="p-12 text-center border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-[40px] space-y-6">
         <div className="w-16 h-16 bg-gray-50 dark:bg-gray-900 rounded-2xl flex items-center justify-center mx-auto">
            <ClipboardList className="text-gray-300" size={32} />
         </div>
-        <div className="space-y-1">
+        <div className="space-y-2">
           <p className="font-bold text-gray-500">No governance activity yet.</p>
-          <p className="text-sm text-gray-400">Submit the first proposal to kick off the network!</p>
+          <p className="text-sm text-gray-400 max-w-xs mx-auto">Be the first — submit a proposal to start the conversation.</p>
         </div>
+        <Link href="/governance" className="inline-flex items-center gap-2 px-6 py-3 bg-[#1D9E75] text-white text-xs font-black uppercase rounded-xl hover:bg-[#0F6E56] transition-all">
+          Submit First Proposal <ChevronRight size={14} />
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {events.map((event) => (
-        <div key={event.id} className="p-5 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-2xl hover:border-[#1D9E75] transition-all group flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 min-w-0">
-             <div className={`p-3 rounded-xl shrink-0 ${
-               event.type === 'ProposalCreated' 
-                ? 'bg-blue-50 dark:bg-blue-900/10 text-blue-500' 
-                : 'bg-green-50 dark:bg-green-900/10 text-[#1D9E75]'
-             }`}>
-                {event.type === 'ProposalCreated' ? <PlusCircle size={18} /> : <Vote size={18} />}
-             </div>
-             
-             <div className="min-w-0">
-                <p className="text-sm font-bold truncate">
-                   {event.type === 'ProposalCreated' ? (
-                     <>📋 New proposal: <span className="text-[#1D9E75]">{event.title}</span></>
-                   ) : (
-                     <>✅ <span className="font-mono text-xs">{event.actor.slice(0, 6)}...{event.actor.slice(-4)}</span> voted <span className={`font-black ${
-                       event.voteType === 0 ? 'text-green-500' : event.voteType === 1 ? 'text-red-500' : 'text-gray-400'
-                     }`}>
-                       {event.voteType === 0 ? 'FOR' : event.voteType === 1 ? 'AGAINST' : 'ABSTAIN'}
-                     </span> on <Link href={`/governance/${event.proposalId}`} className="hover:underline">#{event.proposalId}</Link></>
-                   )}
-                </p>
-                <div className="flex items-center gap-2 mt-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                   <Clock size={10} /> {formatDistanceToNow(event.timestamp)} ago
-                   {event.type === 'ProposalCreated' && (
-                     <>
-                      <span className="w-1 h-1 rounded-full bg-gray-300" />
-                      <span>BY {event.actor.slice(0, 6)}</span>
-                     </>
-                   )}
-                </div>
-             </div>
-          </div>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-2">
+        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Real-time Feed</span>
+      </div>
+      
+      <div className="space-y-3">
+        {events.map((event) => (
+          <div key={event.id} className="p-5 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-2xl hover:border-[#1D9E75] transition-all group flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 min-w-0">
+               <div className={`p-3 rounded-xl shrink-0 ${
+                 event.type === 'ProposalCreated' 
+                  ? 'bg-blue-50 dark:bg-blue-900/10 text-blue-500' 
+                  : 'bg-green-50 dark:bg-green-900/10 text-[#1D9E75]'
+               }`}>
+                  {event.type === 'ProposalCreated' ? <PlusCircle size={18} /> : <Vote size={18} />}
+               </div>
+               
+               <div className="min-w-0">
+                  <div className="text-sm font-bold truncate leading-snug">
+                     {event.type === 'ProposalCreated' ? (
+                       <>📋 New proposal submitted: <span className="text-[#1D9E75]">{event.title}</span></>
+                     ) : (
+                       <>✅ <span className="font-mono text-xs">{event.actor.slice(0, 6)}...{event.actor.slice(-4)}</span> voted <span className={`font-black ${
+                         event.voteType === 0 ? 'text-green-500' : event.voteType === 1 ? 'text-red-500' : 'text-gray-400'
+                       }`}>
+                         {event.voteType === 0 ? 'FOR' : event.voteType === 1 ? 'AGAINST' : 'ABSTAIN'}
+                       </span> on proposal <Link href={`/governance/${event.proposalId}`} className="hover:underline">#{event.proposalId}</Link></>
+                     )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                     <Clock size={10} /> {formatDistanceToNow(event.timestamp, { addSuffix: true })}
+                     {event.type === 'ProposalCreated' && (
+                       <>
+                        <span className="w-1 h-1 rounded-full bg-gray-300" />
+                        <span>BY {event.actor.slice(0, 6)}...{event.actor.slice(-4)}</span>
+                       </>
+                     )}
+                  </div>
+               </div>
+            </div>
 
-          <div className="flex items-center gap-2">
-             <Link href={event.type === 'ProposalCreated' ? `/governance/${event.proposalId}` : `/governance/${event.proposalId}`}>
-                <button className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg text-gray-400 group-hover:text-[#1D9E75] transition-all">
-                   <ChevronRight size={18} />
-                </button>
-             </Link>
-             <a 
-              href={`https://testnet.arcscan.app/tx/${event.hash}`} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg text-gray-300 hover:text-blue-500 transition-all"
-             >
-                <ExternalLink size={14} />
-             </a>
+            <div className="flex items-center gap-2">
+               <Link href={`/governance/${event.proposalId}`}>
+                  <button className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg text-gray-400 group-hover:text-[#1D9E75] transition-all" aria-label="View Proposal">
+                     <ChevronRight size={18} />
+                  </button>
+               </Link>
+               <a 
+                href={`https://testnet.arcscan.app/tx/${event.hash}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg text-gray-300 hover:text-blue-500 transition-all"
+                aria-label="View on Explorer"
+               >
+                  <ExternalLink size={14} />
+               </a>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
