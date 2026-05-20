@@ -23,12 +23,6 @@ export default function Staking() {
   // --- STATE ---
   const [aipProposal, setAipProposal] = useState<any>(null);
   const [isLoadingProposal, setIsLoadingProposal] = useState(true);
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
 
   // Calculator State
   const [calcAmount, setCalcAmount] = useState<string>('0');
@@ -44,30 +38,6 @@ export default function Staking() {
   const [generalEmail, setGeneralEmail] = useState('');
   const [isSubmittingGeneral, setIsSubmittingGeneral] = useState(false);
   const [generalSubmissionRef, setGeneralSubmissionRef] = useState<string | null>(null);
-
-  // --- COUNTDOWN LOGIC ---
-  useEffect(() => {
-    const targetDate = new Date('2027-01-01T00:00:00Z').getTime();
-
-    const timer = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = targetDate - now;
-
-      if (distance < 0) {
-        clearInterval(timer);
-        return;
-      }
-
-      setTimeLeft({
-        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((distance % (1000 * 60)) / 1000)
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   // --- FETCH AIP-001 STATUS ---
   useEffect(() => {
@@ -184,33 +154,22 @@ export default function Staking() {
       </div>
 
       <main className="flex-grow">
-        {/* SECTION 2 — HERO + COUNTDOWN */}
+        {/* SECTION 2 — HERO + COMING SOON */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1D9E75]/10 text-[#1D9E75] text-[10px] font-black tracking-widest mb-6 border border-[#1D9E75]/20">
-            <Clock size={12} /> INITIALIZING PROTOCOL
+            <Clock size={12} /> Arc Testnet
           </div>
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-8 leading-[0.9]">
             tARC STAKING <br />
             <span className="text-[#1D9E75]">IS COMING.</span>
           </h1>
 
-          <div className="flex justify-center gap-3 md:gap-4 mb-8">
-            {[
-              { label: 'DAYS', value: timeLeft.days },
-              { label: 'HOURS', value: timeLeft.hours },
-              { label: 'MINS', value: timeLeft.minutes },
-              { label: 'SECS', value: timeLeft.seconds },
-            ].map((unit) => (
-              <div key={unit.label} className="w-16 md:w-24 h-20 md:h-28 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center">
-                <span className="text-xl md:text-4xl font-black">{unit.value.toString().padStart(2, '0')}</span>
-                <span className="text-[7px] md:text-[10px] font-black text-gray-400 tracking-widest mt-1">{unit.label}</span>
-              </div>
-            ))}
+          <div className="text-center py-8">
+            <span className="text-4xl font-bold text-[#1D9E75]">COMING SOON</span>
+            <p className="text-gray-400 mt-3 text-sm">
+              Projected date — subject to governance vote
+            </p>
           </div>
-          
-          <p className="text-[10px] md:text-sm font-black text-gray-500 uppercase tracking-widest">
-            Projected date — subject to governance vote
-          </p>
         </section>
 
         {/* SECTION 3 — HOW IT WILL WORK */}
