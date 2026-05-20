@@ -363,7 +363,11 @@ export default function Staking() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {validators.map((v: any) => (
-              <div key={v.rank} className="p-8 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-[32px] hover:border-[#1D9E75] transition-all group">
+              <div 
+                key={v.id} 
+                id={v.name.toLowerCase().replace(/\s+/g, '-')}
+                className="p-8 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-[32px] hover:border-[#1D9E75] transition-all group scroll-mt-24"
+              >
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center font-black text-xs">
                     {v.name.slice(0, 1)}

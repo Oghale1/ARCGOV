@@ -61,6 +61,15 @@ export async function getNetworkStats(): Promise<NetworkStats> {
 }
 
 /**
+ * Returns a summary of network health and activity
+ * (Step 1 requirement)
+ */
+export async function getNetworkSummary() {
+  const stats = await getNetworkStats();
+  return stats;
+}
+
+/**
  * Returns the total number of blocks validated by a specific address
  */
 export async function getBlocksValidatedByAddress(address: string): Promise<number> {

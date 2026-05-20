@@ -36,12 +36,13 @@ const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.Res
 // Data & Libs
 import validators from '@/data/validators.json';
 import { 
-  getNetworkStats, 
+  getNetworkSummary, 
   deriveValidatorActivity, 
   getBlocksValidatedByAddress,
   NetworkStats,
   ValidatorActivity
 } from '@/lib/validator-stats';
+import { getBlockNumberFormatted } from '@/lib/arc-rpc';
 import QuantumBadge from '@/components/validators/QuantumBadge';
 import SkeletonLoader from '@/components/shared/SkeletonLoader';
 import NetworkError from '@/components/shared/NetworkError';
@@ -65,6 +66,7 @@ export default function ValidatorClient() {
   const [networkStats, setNetworkStats] = useState<NetworkStats | null>(null);
   const [activity, setActivity] = useState<ValidatorActivity | null>(null);
   const [blocksValidated, setBlocksValidated] = useState<number>(0);
+  const [blockNumber, setBlockNumber] = useState<string | null>(null);
   const [isLoadingLive, setIsLoadingLive] = useState(true);
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -82,15 +84,17 @@ export default function ValidatorClient() {
     const vAddress = validator.validatorAddress || "0x0000000000000000000000000000000000000000";
     
     try {
-      const [nStats, vActivity, bValidated] = await Promise.all([
-        getNetworkStats(),
+      const [nStats, vActivity, bValidated, bNumber] = await Promise.all([
+        getNetworkSummary(),
         deriveValidatorActivity(vAddress),
-        getBlocksValidatedByAddress(vAddress)
+        getBlocksValidatedByAddress(vAddress),
+        getBlockNumberFormatted()
       ]);
 
       setNetworkStats(nStats);
       setActivity(vActivity);
       setBlocksValidated(bValidated);
+      setBlockNumber(bNumber);
       setLastFetchedAt(new Date());
     } catch (err) {
       console.error("Error fetching live validator data:", err);
@@ -133,11 +137,10 @@ export default function ValidatorClient() {
     try {
       const wallet = isConnected ? address : customWallet;
       const { data, error } = await supabase
-        .from('delegation_interest')
+        .from('staking_waitlist')
         .insert([
           { 
             validator_id: validator.id, 
-            validator_name: validator.name,
             wallet_address: wallet,
             email: email 
           }
@@ -313,7 +316,6 @@ export default function ValidatorClient() {
            />
         </div>
 
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2 space-y-12">
             {/* SECTION 3 — UPTIME HISTORY CHART */}
@@ -425,6 +427,25 @@ export default function ValidatorClient() {
             </div>
           </aside>
         </div>
+
+        {/* SECTION 6 — STAKING CTA */}
+        <section className="mt-24 p-12 bg-[#E1F5EE] dark:bg-[#1D9E75]/5 border border-[#1D9E75]/20 rounded-[48px] text-center space-y-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#1D9E75] rounded-full blur-[120px] -mr-32 -mt-32 opacity-10" />
+          <div className="relative z-10">
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight">Interested in staking with {validator.name}?</h2>
+            <p className="text-gray-600 dark:text-[#1D9E75]/70 font-medium max-w-xl mx-auto">
+              Join the waitlist and be notified when delegation opens on Arc mainnet. Get early access to institutional rewards.
+            </p>
+            <div className="pt-4">
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="px-10 h-16 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all active:scale-95 shadow-xl shadow-[#1D9E75]/20 uppercase tracking-widest text-sm"
+              >
+                Join Staking Waitlist
+              </button>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* DELEGATION INTEREST MODAL */}
@@ -496,13 +517,6 @@ export default function ValidatorClient() {
                 </button>
               </form>
             )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-      )}
           </div>
         </div>
       )}

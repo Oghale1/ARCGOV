@@ -1,9 +1,10 @@
 'use client';
 // ArcGov — Built by Gemini — arcgov.xyz
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import QuantumBadge from '@/components/validators/QuantumBadge';
 import TestnetChip from '@/components/shared/TestnetChip';
+import VerifiedBadge from '@/components/shared/VerifiedBadge';
 import validators from '@/data/validators.json';
 import supabase from '@/lib/supabase';
 import { 
@@ -21,6 +22,7 @@ import {
   Filter
 } from 'lucide-react';
 import Link from 'next/link';
+import { getBlockNumberFormatted, getBlocksValidatedByAddress } from '@/lib/arc-rpc';
 
 export default function ValidatorsPage() {
   const [search, setSearch] = useState('');
@@ -31,6 +33,12 @@ export default function ValidatorsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
+
+  // Live Data State
+  const [blockNumber, setBlockNumber] = useState<string | null>(null);
+  const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [blockCounts, setBlockCounts] = useState<Record<number, number>>({});
 
   // Stats
   const avgUptime = useMemo(() => {
@@ -44,6 +52,34 @@ export default function ValidatorsPage() {
 
   const countries = useMemo(() => {
     return ['All', ...Array.from(new Set(validators.map(v => v.country)))];
+  }, []);
+
+  // Fetch Data
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const [block, ...counts] = await Promise.all([
+        getBlockNumberFormatted(),
+        ...validators.map(v => getBlocksValidatedByAddress(v.validatorAddress))
+      ]);
+      setBlockNumber(block);
+      
+      const countsMap: Record<number, number> = {};
+      validators.forEach((v, i) => {
+        countsMap[v.id] = counts[i];
+      });
+      setBlockCounts(countsMap);
+      
+      setLastFetchedAt(new Date());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   // Filter & Sort Logic
@@ -232,98 +268,126 @@ export default function ValidatorsPage() {
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Location</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Uptime</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Commission</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Total Staked</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Blocks Validated</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Quantum</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
-              {filteredValidators.map((v) => (
-                <tr key={v.id} className="group hover:bg-gray-50/50 dark:hover:bg-[#1D9E75]/5 transition-colors">
-                  <td className="px-6 py-6 font-mono font-bold text-gray-400">#{v.id}</td>
-                  <td className="px-6 py-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#E1F5EE] dark:bg-[#1D9E75]/10 flex items-center justify-center text-[#1D9E75] font-black text-xs">
-                        {v.shortName}
+              {filteredValidators.map((v) => {
+                const blocks = blockCounts[v.id] || 0;
+                const isPlaceholder = v.validatorAddress?.startsWith("0x1000") || !v.validatorAddress;
+
+                return (
+                  <tr key={v.id} className="group hover:bg-gray-50/50 dark:hover:bg-[#1D9E75]/5 transition-colors">
+                    <td className="px-6 py-6 font-mono font-bold text-gray-400">#{v.id}</td>
+                    <td className="px-6 py-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#E1F5EE] dark:bg-[#1D9E75]/10 flex items-center justify-center text-[#1D9E75] font-black text-xs">
+                          {v.shortName}
+                        </div>
+                        <span className="font-bold group-hover:text-[#1D9E75] transition-colors">{v.name}</span>
                       </div>
-                      <span className="font-bold group-hover:text-[#1D9E75] transition-colors">{v.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-6 text-sm font-medium flex items-center gap-2">
-                    <span>{v.flagEmoji}</span>
-                    <span className="text-gray-500">{v.country}</span>
-                  </td>
-                  <td className="px-6 py-6">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-black font-mono">{v.uptime}%</span>
-                      <div className="w-10 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#1D9E75]" style={{ width: `${v.uptime}%` }} />
+                    </td>
+                    <td className="px-6 py-6 text-sm font-medium flex items-center gap-2">
+                      <span>{v.flagEmoji}</span>
+                      <span className="text-gray-500">{v.country}</span>
+                    </td>
+                    <td className="px-6 py-6">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black font-mono">{v.uptime}%</span>
+                        <div className="w-10 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-[#1D9E75]" style={{ width: `${v.uptime}%` }} />
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-6 text-sm font-bold font-mono">{v.commission}%</td>
-                  <td className="px-6 py-6">
-                     <div className="flex items-center gap-1 text-[10px] font-black text-gray-400 uppercase">
-                       0 USDC <TestnetChip />
-                     </div>
-                  </td>
-                  <td className="px-6 py-6">
-                    <QuantumBadge status={v.quantumStatus as any} />
-                  </td>
-                  <td className="px-6 py-6">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 dark:bg-green-900/10 text-green-600 text-[10px] font-black uppercase tracking-widest">
-                       <span className="w-1 h-1 rounded-full bg-green-500" /> ACTIVE
-                    </span>
-                  </td>
-                  <td className="px-6 py-6 text-right">
-                    <Link 
-                      href={`/validators/${v.id}`}
-                      className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 text-[10px] font-black uppercase hover:bg-[#1D9E75] hover:text-white transition-all h-10"
-                    >
-                      VIEW PROFILE <ChevronRight size={14} />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-6 text-sm font-bold font-mono">{v.commission}%</td>
+                    <td className="px-6 py-6">
+                      {isPlaceholder || blocks === 0 ? (
+                        <span className="text-gray-300 font-black cursor-help" title="Live when Arc publishes validator addresses">—</span>
+                      ) : (
+                        <span className="text-sm font-black font-mono">{blocks.toLocaleString()}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-6">
+                      <QuantumBadge status={v.quantumStatus as any} />
+                    </td>
+                    <td className="px-6 py-6">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 dark:bg-green-900/10 text-green-600 text-[10px] font-black uppercase tracking-widest">
+                         <span className="w-1 h-1 rounded-full bg-green-500" /> ACTIVE
+                      </span>
+                    </td>
+                    <td className="px-6 py-6 text-right space-x-2">
+                      <Link 
+                        href={`/staking#${v.name.toLowerCase().replace(/\s+/g, '-')}`}
+                        className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-[#1D9E75]/10 text-[#1D9E75] text-[10px] font-black uppercase hover:bg-[#1D9E75] hover:text-white transition-all h-10"
+                      >
+                        STAKE
+                      </Link>
+                      <Link 
+                        href={`/validators/${v.id}`}
+                        className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 text-[10px] font-black uppercase hover:bg-[#1D9E75] hover:text-white transition-all h-10"
+                      >
+                        VIEW PROFILE <ChevronRight size={14} />
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
         {/* MOBILE CARDS */}
         <div className="grid md:hidden grid-cols-1 gap-4">
-          {filteredValidators.map((v) => (
-            <div key={v.id} className="p-6 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-[24px]">
-               <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#E1F5EE] dark:bg-[#1D9E75]/10 flex items-center justify-center text-[#1D9E75] font-black text-xs">
-                      {v.shortName}
+          {filteredValidators.map((v) => {
+            const blocks = blockCounts[v.id] || 0;
+            const isPlaceholder = v.validatorAddress?.startsWith("0x1000") || !v.validatorAddress;
+
+            return (
+              <div key={v.id} className="p-6 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-[24px]">
+                 <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#E1F5EE] dark:bg-[#1D9E75]/10 flex items-center justify-center text-[#1D9E75] font-black text-xs">
+                        {v.shortName}
+                      </div>
+                      <div>
+                         <h4 className="font-bold leading-none mb-1">{v.name}</h4>
+                         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{v.flagEmoji} {v.country}</p>
+                      </div>
                     </div>
-                    <div>
-                       <h4 className="font-bold leading-none mb-1">{v.name}</h4>
-                       <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{v.flagEmoji} {v.country}</p>
+                    <QuantumBadge status={v.quantumStatus as any} />
+                 </div>
+                 <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Uptime</p>
+                      <p className="text-sm font-black font-mono">{v.uptime}%</p>
                     </div>
-                  </div>
-                  <QuantumBadge status={v.quantumStatus as any} />
-               </div>
-               <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Uptime</p>
-                    <p className="text-sm font-black font-mono">{v.uptime}%</p>
-                  </div>
-                  <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Comm.</p>
-                    <p className="text-sm font-black font-mono">{v.commission}%</p>
-                  </div>
-               </div>
-               <Link 
-                href={`/validators/${v.id}`}
-                className="w-full h-14 bg-gray-50 dark:bg-gray-900 text-[10px] font-black uppercase rounded-xl flex items-center justify-center gap-2 hover:bg-[#1D9E75] hover:text-white transition-all"
-               >
-                 VIEW PROFILE <ChevronRight size={14} />
-               </Link>
-            </div>
-          ))}
+                    <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Blocks</p>
+                      <p className="text-sm font-black font-mono">
+                        {isPlaceholder || blocks === 0 ? "—" : blocks.toLocaleString()}
+                      </p>
+                    </div>
+                 </div>
+                 <div className="grid grid-cols-2 gap-3">
+                   <Link 
+                    href={`/staking#${v.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    className="h-12 bg-[#1D9E75] text-white text-[10px] font-black uppercase rounded-xl flex items-center justify-center gap-2 hover:bg-[#0F6E56] transition-all"
+                   >
+                     STAKE NOW
+                   </Link>
+                   <Link 
+                    href={`/validators/${v.id}`}
+                    className="h-12 bg-gray-50 dark:bg-gray-900 text-[10px] font-black uppercase rounded-xl flex items-center justify-center gap-2 hover:bg-[#1D9E75] hover:text-white transition-all"
+                   >
+                     VIEW PROFILE <ChevronRight size={14} />
+                   </Link>
+                 </div>
+              </div>
+            );
+          })}
         </div>
       </main>
 
