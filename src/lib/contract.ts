@@ -4,7 +4,8 @@ import {
   http, 
   parseAbi, 
   PublicClient, 
-  WalletClient 
+  WalletClient,
+  decodeEventLog
 } from 'viem';
 
 // Arc Testnet Configuration
@@ -128,6 +129,7 @@ export async function getVoterChoice(proposalId: number, address: string): Promi
 
 /**
  * Submits a new proposal to the contract
+ * Returns { hash, proposalId }
  */
 export async function submitProposal(
   title: string,
@@ -135,7 +137,7 @@ export async function submitProposal(
   category: number,
   walletClient: WalletClient,
   publicClientForWrite: PublicClient
-) {
+): Promise<{ hash: `0x${string}`, proposalId: number }> {
   try {
     const [address] = await walletClient.getAddresses();
     const { request } = await publicClientForWrite.simulateContract({
@@ -143,10 +145,36 @@ export async function submitProposal(
       address: CONTRACT_ADDRESS,
       abi: ARCGovCoreABI,
       functionName: 'submitProposal',
-      args: [title, description, category, ""], // ipfsHash left empty as per basic requirement
+      args: [title, description, category, ""], // ipfsHash left empty
     });
+    
     const hash = await walletClient.writeContract(request);
-    return hash;
+    
+    // Wait for receipt to extract proposalId from event
+    const receipt = await publicClientForWrite.waitForTransactionReceipt({ hash });
+    
+    // Parse ProposalCreated event
+    const logs = receipt.logs;
+    let proposalId = 0;
+    
+    for (const log of logs) {
+      try {
+        const event = decodeEventLog({
+          abi: ARCGovCoreABI,
+          data: log.data,
+          topics: log.topics,
+          eventName: 'ProposalCreated'
+        });
+        if (event.eventName === 'ProposalCreated') {
+          proposalId = Number((event.args as any).id);
+          break;
+        }
+      } catch (e) {
+        // Skip logs that don't match
+      }
+    }
+
+    return { hash, proposalId };
   } catch (error) {
     console.error('Error in submitProposal:', error);
     throw error;

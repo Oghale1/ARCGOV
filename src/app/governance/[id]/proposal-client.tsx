@@ -37,7 +37,9 @@ import {
   hasVoted,
   getProposalCount
 } from '@/lib/contract';
+import { getBlockNumberFormatted } from '@/lib/arc-rpc';
 import { useToast } from '@/components/shared/Toast';
+import supabase from '@/lib/supabase';
 
 // Components
 import ProposalDiff from '@/components/governance/ProposalDiff';
@@ -45,6 +47,7 @@ import NetworkError from '@/components/shared/NetworkError';
 import SkeletonLoader from '@/components/shared/SkeletonLoader';
 import VerifiedBadge from '@/components/shared/VerifiedBadge';
 import TestnetChip from '@/components/shared/TestnetChip';
+import CountdownTimer from '@/components/shared/CountdownTimer';
 
 const CATEGORY_LABELS = ['VALIDATOR', 'PARAMETER', 'UPGRADE', 'ECOSYSTEM'];
 const CATEGORY_COLORS: any = {
@@ -58,9 +61,11 @@ export default function ProposalClient() {
   const { id } = useParams();
   const router = useRouter();
   const [proposal, setProposal] = useState<any>(null);
+  const [customDeadline, setCustomDeadline] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
+  const [blockNumber, setBlockNumber] = useState<string | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const [userVoteStatus, setUserVoteStatus] = useState<boolean>(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -82,12 +87,24 @@ export default function ProposalClient() {
     setIsLoading(true);
     setError(null);
     try {
-      const all = await getAllProposals();
+      const [all, block, meta] = await Promise.all([
+        getAllProposals(),
+        getBlockNumberFormatted(),
+        supabase.from('proposal_metadata').select('*').eq('proposal_id', id).single()
+      ]);
       const found = (all as any[]).find(p => p.id.toString() === id);
       
       if (found) {
         setProposal(found);
+        setBlockNumber(block);
         setLastFetchedAt(new Date());
+        
+        if (meta.data) {
+          setCustomDeadline(new Date(meta.data.custom_deadline));
+        } else {
+          setCustomDeadline(new Date(Number(found.votingDeadline) * 1000));
+        }
+
         if (isConnected && address) {
           const voted = await hasVoted(Number(found.id), address);
           setUserVoteStatus(voted);
@@ -214,8 +231,14 @@ export default function ProposalClient() {
                   {CATEGORY_LABELS[proposal.category] || 'ECOSYSTEM'}
                 </span>
                 <div className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${proposal.isOpen ? 'bg-green-50 text-green-700 dark:bg-green-900/10' : 'bg-blue-50 text-blue-700 dark:bg-blue-900/10'}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${proposal.isOpen ? 'bg-green-500 animate-pulse' : 'bg-blue-500'}`} />
-                  {proposal.isOpen ? 'Voting Active' : 'Voting Closed'}
+                  {proposal.isOpen && customDeadline ? (
+                    <CountdownTimer deadline={customDeadline} />
+                  ) : (
+                    <>
+                      <span className={`w-1.5 h-1.5 rounded-full ${proposal.isOpen ? 'bg-green-500 animate-pulse' : 'bg-blue-500'}`} />
+                      {proposal.isOpen ? 'Voting Active' : 'Voting Closed'}
+                    </>
+                  )}
                 </div>
                 <span className="text-xs text-gray-500 flex items-center gap-1.5">
                   <User size={14} /> Proposed by {proposal.proposer.slice(0, 6)}...{proposal.proposer.slice(-4)}
@@ -398,15 +421,6 @@ export default function ProposalClient() {
                 className="flex-1 py-4 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all text-sm h-14"
               >
                 CONFIRM VOTE
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-FIRM VOTE
               </button>
             </div>
           </div>

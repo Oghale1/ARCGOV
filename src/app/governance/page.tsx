@@ -28,6 +28,8 @@ import NetworkError from '@/components/shared/NetworkError';
 import VerifiedBadge from '@/components/shared/VerifiedBadge';
 import ProposalCard from '@/components/governance/ProposalCard';
 import TestnetChip from '@/components/shared/TestnetChip';
+import { addDays, format } from 'date-fns';
+import supabase from '@/lib/supabase';
 
 const CATEGORY_LABELS = ['VALIDATOR', 'PARAMETER', 'UPGRADE', 'ECOSYSTEM'];
 const CATEGORY_COLORS: any = {
@@ -39,6 +41,7 @@ const CATEGORY_COLORS: any = {
 
 export default function Governance() {
   const [proposals, setProposals] = useState<any[]>([]);
+  const [metadata, setMetadata] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [filterTab, setFilterTab] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
@@ -53,16 +56,18 @@ export default function Governance() {
   const chainId = useChainId();
   const { toast, dismiss } = useToast();
 
-  // Fetch Proposals
+  // Fetch Proposals and Metadata
   const fetchProposals = async () => {
     setIsLoading(true);
     try {
-      const [all, block] = await Promise.all([
+      const [all, block, meta] = await Promise.all([
         getAllProposals(),
-        getBlockNumberFormatted()
+        getBlockNumberFormatted(),
+        supabase.from('proposal_metadata').select('*')
       ]);
       setProposals((all as any[]) || []);
       setBlockNumber(block);
+      setMetadata(meta.data || []);
       setLastFetchedAt(new Date());
     } catch (err) {
       console.error(err);
@@ -75,6 +80,17 @@ export default function Governance() {
     fetchProposals();
   }, []);
 
+  // Merged Proposals
+  const proposalsWithMetadata = useMemo(() => {
+    return proposals.map(p => {
+      const m = metadata.find(meta => meta.proposal_id === p.id.toString());
+      return {
+        ...p,
+        customDeadline: m ? new Date(m.custom_deadline) : new Date(Number(p.votingDeadline) * 1000)
+      };
+    });
+  }, [proposals, metadata]);
+
   // Stats
   const stats = useMemo(() => {
     const total = proposals.length;
@@ -86,24 +102,26 @@ export default function Governance() {
 
   // Filtered Proposals
   const filteredProposals = useMemo(() => {
-    return proposals.filter(p => {
+    return proposalsWithMetadata.filter(p => {
       const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase());
       const matchesTab = 
         filterTab === 'All' || 
         (filterTab === 'Active' && p.isOpen) || 
         (filterTab === 'Passed' && !p.isOpen && Number(p.forVotes) > Number(p.againstVotes)) ||
         (filterTab === 'Failed' && !p.isOpen && Number(p.forVotes) <= Number(p.againstVotes)) ||
-        (filterTab === 'Pending' && p.isOpen); // Mapping Pending to Active for now
+        (filterTab === 'Pending' && p.isOpen);
       return matchesSearch && matchesTab;
     }).sort((a, b) => Number(b.id) - Number(a.id));
-  }, [proposals, search, filterTab]);
+  }, [proposalsWithMetadata, search, filterTab]);
 
   // Modal Handlers
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     category: 0,
-    rationale: ''
+    rationale: '',
+    votingPeriod: '7',
+    customDeadline: format(addDays(new Date(), 7), "yyyy-MM-dd'T'HH:mm")
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,7 +141,7 @@ export default function Governance() {
         ? `${formData.description}\n\nWHY THIS MATTERS:\n${formData.rationale}` 
         : formData.description;
       
-      const hash = await submitProposal(
+      const { hash, proposalId } = await submitProposal(
         formData.title,
         fullDescription,
         formData.category,
@@ -131,10 +149,25 @@ export default function Governance() {
         publicClient as any
       );
 
+      // Store Metadata in Supabase
+      const deadline = formData.votingPeriod === 'custom' 
+        ? new Date(formData.customDeadline)
+        : addDays(new Date(), parseInt(formData.votingPeriod));
+
+      await supabase.from('proposal_metadata').insert([{
+        proposal_id: proposalId.toString(),
+        custom_deadline: deadline.toISOString(),
+        submitter_wallet: address
+      }]);
+
       dismiss(toastId);
-      toast(`Proposal submitted! Hash: ${hash.slice(0, 10)}...`, "success");
+      toast(`Proposal #${proposalId} submitted!`, "success");
       setIsModalOpen(false);
-      setFormData({ title: '', description: '', category: 0, rationale: '' });
+      setFormData({ 
+        title: '', description: '', category: 0, rationale: '', 
+        votingPeriod: '7', 
+        customDeadline: format(addDays(new Date(), 7), "yyyy-MM-dd'T'HH:mm") 
+      });
       fetchProposals();
     } catch (err: any) {
       dismiss(toastId);
@@ -330,10 +363,38 @@ export default function Governance() {
                     ))}
                   </select>
                 </div>
-                <div className="flex items-end pb-1">
-                   <p className="text-[10px] text-gray-500 italic">Select the category that best fits your proposal&apos;s impact.</p>
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-gray-400">Voting Period</label>
+                  <select 
+                    className="w-full px-5 h-14 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none transition-all font-bold appearance-none"
+                    value={formData.votingPeriod}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const newDeadline = val === 'custom' ? formData.customDeadline : format(addDays(new Date(), parseInt(val)), "yyyy-MM-dd'T'HH:mm");
+                      setFormData({...formData, votingPeriod: val, customDeadline: newDeadline});
+                    }}
+                  >
+                    <option value="3">3 Days</option>
+                    <option value="7">7 Days</option>
+                    <option value="14">14 Days</option>
+                    <option value="30">30 Days</option>
+                    <option value="custom">Custom Date</option>
+                  </select>
                 </div>
               </div>
+
+              {formData.votingPeriod === 'custom' && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-gray-400">Custom Deadline</label>
+                  <input 
+                    type="datetime-local"
+                    required
+                    className="w-full px-5 h-14 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none transition-all font-bold"
+                    value={formData.customDeadline}
+                    onChange={(e) => setFormData({...formData, customDeadline: e.target.value})}
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-widest text-gray-400">Description</label>

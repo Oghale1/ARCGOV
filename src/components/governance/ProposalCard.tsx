@@ -2,6 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Clock, User, ChevronRight } from 'lucide-react';
+import CountdownTimer from '@/components/shared/CountdownTimer';
 
 export interface Proposal {
   id: bigint | number;
@@ -10,6 +11,8 @@ export interface Proposal {
   description: string;
   category: number;
   timestamp: bigint | number;
+  votingDeadline: bigint | number;
+  customDeadline?: Date;
   forVotes: bigint | number;
   againstVotes: bigint | number;
   abstainVotes: bigint | number;
@@ -56,16 +59,22 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
           </div>
           
           <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${
-            status === 'Active' ? 'bg-green-100 text-green-700' :
-            status === 'Passed' ? 'bg-blue-100 text-blue-700' :
-            'bg-red-100 text-red-700'
+            status === 'Active' ? 'bg-green-100 dark:bg-green-900/20' :
+            status === 'Passed' ? 'bg-blue-100 dark:bg-blue-900/20' :
+            'bg-red-100 dark:bg-red-900/20'
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${
-              status === 'Active' ? 'bg-green-500 animate-pulse' :
-              status === 'Passed' ? 'bg-blue-500' :
-              'bg-red-500'
-            }`} />
-            {status === 'Active' ? '7 DAYS REMAINING' : `Voting ${status}`}
+            {status === 'Active' ? (
+              <CountdownTimer deadline={proposal.customDeadline || new Date(Number(proposal.votingDeadline) * 1000)} />
+            ) : (
+              <>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  status === 'Passed' ? 'bg-blue-500' : 'bg-red-500'
+                }`} />
+                <span className={status === 'Passed' ? 'text-blue-700 dark:text-blue-400' : 'text-red-700 dark:text-red-400'}>
+                  Voting {status}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -89,4 +98,3 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
     </Link>
   );
 }
-
