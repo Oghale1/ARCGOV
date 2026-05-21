@@ -1,0 +1,52 @@
+{
+  "nav": {
+    "overview": "Visão Geral",
+    "governance": "Governança",
+    "validators": "Validadores",
+    "staking": "Staking",
+    "quantum": "Quantum",
+    "architects": "Arquitetos",
+    "leaderboard": "Classificação",
+    "about": "Sobre",
+    "dashboard": "Meu Painel"
+  },
+  "home": {
+    "hero_title": "HUB DE GOVERNANÇA ARC",
+    "hero_subtitle": "O primeiro painel de governança comunitária para a blockchain Arc. Envie propostas, acompanhe validadores e molde o futuro da Arc.",
+    "view_proposals": "VER PROPOSTAS",
+    "meet_validators": "CONHECER VALIDADORES",
+    "total_staked": "Total em Staking",
+    "active_validators": "Validadores Ativos",
+    "open_proposals": "Propostas Abertas",
+    "governance_health": "Saúde da Governança"
+  },
+  "governance": {
+    "title": "Governança Arc",
+    "subtitle": "Vote em propostas que moldam a rede Arc",
+    "submit_proposal": "Enviar Proposta",
+    "connect_to_submit": "Conecte sua carteira para enviar",
+    "no_proposals": "Nenhuma proposta ainda. Seja o primeiro a enviar uma.",
+    "vote_for": "Votar a FAVOR",
+    "vote_against": "Votar CONTRA",
+    "vote_abstain": "Abster-se"
+  },
+  "validators": {
+    "title": "Rede de Validadores Arc",
+    "apply_validator": "Candidatar-se como Validador",
+    "view_profile": "Ver Perfil",
+    "stake_with": "Fazer Staking com este Validador"
+  },
+  "staking": {
+    "coming_soon": "EM BREVE",
+    "projected": "Data projetada — sujeita a voto de governança",
+    "join_waitlist": "Entrar na lista de espera de staking",
+    "notify_me": "Notifique-me"
+  },
+  "common": {
+    "verified_onchain": "Verificado na blockchain",
+    "testnet": "Testnet",
+    "connect_wallet": "Conectar Carteira",
+    "loading": "Carregando...",
+    "error_network": "Arc Testnet temporariamente indisponível"
+  }
+}

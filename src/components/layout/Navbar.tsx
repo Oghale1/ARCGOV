@@ -22,27 +22,30 @@ import {
 import { usePublicClient } from 'wagmi';
 import { ARCGovCoreABI } from '@/lib/contract';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from '@/lib/i18n';
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 
 const CONTRACT_ADDRESS = '0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99' as `0x${string}`;
 
-const navLinks = [
-  { name: 'Overview', href: '/' },
-  { name: 'Governance', href: '/governance' },
-  { name: 'Validators', href: '/validators' },
-  { name: 'Staking', href: '/staking' },
-  { name: 'Quantum', href: '/quantum' },
-  { name: 'Architects', href: '/architects' },
-  { name: 'About', href: '/about' },
-  { name: 'My Dashboard', href: '/my-dashboard' },
-];
-
 export default function Navbar() {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const publicClient = usePublicClient();
   const [mounted, setMounted] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
+  const navLinks = [
+    { name: t('nav.overview'), href: '/' },
+    { name: t('nav.governance'), href: '/governance' },
+    { name: t('nav.validators'), href: '/validators' },
+    { name: t('nav.staking'), href: '/staking' },
+    { name: t('nav.quantum'), href: '/quantum' },
+    { name: t('nav.architects'), href: '/architects' },
+    { name: t('nav.about'), href: '/about' },
+    { name: t('nav.dashboard'), href: '/my-dashboard' },
+  ];
+
   // Notification State
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -259,6 +262,8 @@ export default function Navbar() {
             <Moon className="w-5 h-5 text-gray-500" />
           )}
         </button>
+
+        <LanguageSwitcher />
 
         <div className="hidden sm:block">
           <ConnectButton 

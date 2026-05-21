@@ -1,0 +1,52 @@
+{
+  "nav": {
+    "overview": "Overview",
+    "governance": "Governance",
+    "validators": "Validators",
+    "staking": "Staking",
+    "quantum": "Quantum",
+    "architects": "Architects",
+    "leaderboard": "Leaderboard",
+    "about": "About",
+    "dashboard": "My Dashboard"
+  },
+  "home": {
+    "hero_title": "ARC GOVERNANCE HUB",
+    "hero_subtitle": "The first community governance dashboard for the Arc blockchain. Submit proposals, track validators, and shape Arc's future.",
+    "view_proposals": "VIEW PROPOSALS",
+    "meet_validators": "MEET VALIDATORS",
+    "total_staked": "Total Staked",
+    "active_validators": "Active Validators",
+    "open_proposals": "Open Proposals",
+    "governance_health": "Governance Health"
+  },
+  "governance": {
+    "title": "Arc Governance",
+    "subtitle": "Vote on proposals that shape the Arc network",
+    "submit_proposal": "Submit Proposal",
+    "connect_to_submit": "Connect your wallet to submit",
+    "no_proposals": "No proposals yet. Be the first to submit one.",
+    "vote_for": "Vote FOR",
+    "vote_against": "Vote AGAINST",
+    "vote_abstain": "Abstain"
+  },
+  "validators": {
+    "title": "Arc Validator Network",
+    "apply_validator": "Apply as Validator",
+    "view_profile": "View Profile",
+    "stake_with": "Stake with this Validator"
+  },
+  "staking": {
+    "coming_soon": "COMING SOON",
+    "projected": "Projected date — subject to governance vote",
+    "join_waitlist": "Join the staking waitlist",
+    "notify_me": "Notify Me"
+  },
+  "common": {
+    "verified_onchain": "Verified on-chain",
+    "testnet": "Testnet",
+    "connect_wallet": "Connect Wallet",
+    "loading": "Loading...",
+    "error_network": "Arc Testnet temporarily unavailable"
+  }
+}
