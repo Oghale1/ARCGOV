@@ -150,6 +150,16 @@ export default function ValidatorClient() {
       if (error) throw error;
       if (data) {
         setSubmissionId(data[0].id.toString().slice(0, 8));
+
+        // Send confirmation email
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'waitlist_confirmation',
+            email: email
+          }),
+        });
       }
     } catch (err) {
       console.error(err);

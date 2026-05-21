@@ -103,6 +103,16 @@ export default function Staking() {
       const refId = data?.[0]?.id?.toString().slice(0, 8) || 'SUCCESS';
       setValidatorSubmissionRef(refId);
       toast("Added to validator waitlist!", "success");
+
+      // Send confirmation email
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'waitlist_confirmation',
+          email: validatorEmail
+        }),
+      });
     } catch (err) {
       console.error(err);
       toast("Submission failed.", "error");
@@ -130,6 +140,16 @@ export default function Staking() {
       const refId = data?.[0]?.id?.toString().slice(0, 8) || 'SUCCESS';
       setGeneralSubmissionRef(refId);
       toast("You are on the waitlist!", "success");
+
+      // Send confirmation email
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'waitlist_confirmation',
+          email: generalEmail
+        }),
+      });
     } catch (err) {
       console.error(err);
       toast("Submission failed.", "error");
