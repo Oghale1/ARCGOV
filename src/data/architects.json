@@ -1,44 +1,15 @@
-[
-  {
-    "id": 1,
-    "name": "NOMA",
-    "xHandle": "@noma_protocol",
-    "githubUrl": "https://github.com/noma-protocol",
-    "projectName": "NOMA",
-    "projectDescription": "Payroll protocol built at HackMoney 2026.",
-    "category": "Payments",
-    "walletAddress": "0x0000000000000000000000000000000000000001",
-    "proposalsSubmitted": 0,
-    "votesCast": 0,
-    "projectsBuilt": 1,
-    "joinedDate": "2026-05-08"
-  },
-  {
-    "id": 2,
-    "name": "SmartRenovate",
-    "xHandle": "@smart_renovate",
-    "githubUrl": "https://github.com/smart-renovate",
-    "projectName": "SmartRenovate",
-    "projectDescription": "Construction escrow protocol built at HackMoney 2026.",
-    "category": "DeFi",
-    "walletAddress": "0x0000000000000000000000000000000000000002",
-    "proposalsSubmitted": 0,
-    "votesCast": 0,
-    "projectsBuilt": 1,
-    "joinedDate": "2026-05-08"
-  },
-  {
-    "id": 3,
-    "name": "sugarc",
-    "xHandle": "@sugarc_dist",
-    "githubUrl": "https://github.com/sugarc-dist",
-    "projectName": "sugarc",
-    "projectDescription": "Revenue distribution protocol built at HackMoney 2026.",
-    "category": "Ecosystem",
-    "walletAddress": "0x0000000000000000000000000000000000000003",
-    "proposalsSubmitted": 0,
-    "votesCast": 0,
-    "projectsBuilt": 1,
-    "joinedDate": "2026-05-08"
-  }
-]
+[{
+  "id": "arcgov",
+  "name": "Ekomekido Oghale",
+  "xHandle": "@EkomekidoO",
+  "githubUrl": "https://github.com/Oghale1/arcgov",
+  "projectName": "ArcGov",
+  "projectDescription": "The first community governance and validator dashboard for Arc blockchain.",
+  "category": "Governance",
+  "appLink": "https://arcgov.vercel.app",
+  "walletAddress": "0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99",
+  "proposalsSubmitted": 0,
+  "votesCast": 0,
+  "projectsBuilt": 2,
+  "joinedDate": "2026-4"
+}]
