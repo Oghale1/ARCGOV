@@ -3,11 +3,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(request: Request) {
   try {
-    const { proposalTitle, proposalDescription } = await request.json();
+    const { proposalTitle, proposalDescription, userMessage } = await request.json();
 
     if (!proposalTitle || !proposalDescription) {
       return NextResponse.json(
-        { error: 'Missing proposalTitle or proposalDescription' },
+        { error: 'Missing proposal data' },
         { status: 400 }
       );
     }
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'AI summary temporarily unavailable' },
+        { error: 'AI assistant temporarily unavailable. Please check GEMINI_API_KEY.' },
         { status: 503 }
       );
     }
@@ -24,19 +24,34 @@ export async function POST(request: Request) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",
-      systemInstruction: "You are a governance analyst for Arc blockchain by Circle. Summarise governance proposals in plain English for non-technical readers. Keep summaries under 200 words. Be neutral, factual, and clear. Always start with 'This proposal aims to...'",
     });
 
-    const prompt = `Proposal title: ${proposalTitle}\n\nDescription: ${proposalDescription}\n\nWrite a plain English summary.`;
+    const systemInstruction = `You are "Gemini Arc", a governance analyst for the Arc blockchain. 
+    Your goal is to help users understand governance proposals. 
+    Be neutral, factual, and concise. 
+    The current proposal is titled: "${proposalTitle}".
+    The description is: "${proposalDescription}".
+    
+    If the user asks for a summary, provide a clear 2-3 paragraph explanation starting with "This proposal aims to...".
+    If the user asks a specific question, answer it based on the proposal description provided.
+    If the answer isn't in the description, say you don't have that specific information but explain what you do know.`;
+
+    let prompt = "";
+    if (userMessage) {
+      prompt = `${systemInstruction}\n\nUser Question: ${userMessage}`;
+    } else {
+      prompt = `${systemInstruction}\n\nPlease provide a summary of this proposal.`;
+    }
     
     const result = await model.generateContent(prompt);
-    const summary = result.response.text();
+    const response = await result.response;
+    const text = response.text();
 
-    return NextResponse.json({ summary });
-  } catch (error) {
-    console.error('Summarise API error:', error);
+    return NextResponse.json({ text });
+  } catch (error: any) {
+    console.error('Gemini API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error.message || 'Internal server error' },
       { status: 500 }
     );
   }

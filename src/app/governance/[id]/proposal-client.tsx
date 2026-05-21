@@ -19,7 +19,8 @@ import {
   ChevronDown,
   Info,
   Zap,
-  Plus
+  Plus,
+  ArrowRight
 } from 'lucide-react';
 import { 
   useAccount, 
@@ -71,9 +72,10 @@ export default function ProposalClient() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedVote, setSelectedVote] = useState<number | null>(null);
   
-  // AI Summary State
+  // AI Assistant State
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [summary, setSummary] = useState<string | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [input, setInput] = useState('');
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
 
   const { isConnected, address } = useAccount();
@@ -160,9 +162,20 @@ export default function ProposalClient() {
     }
   };
 
-  const handleSummarize = async () => {
+  const handleSendMessage = async (e?: React.FormEvent, customMessage?: string) => {
+    if (e) e.preventDefault();
+    const messageToSend = customMessage || input;
+    if (!messageToSend && messages.length > 0) return;
+
     setIsSummarizing(true);
     setIsSummaryExpanded(true);
+    
+    // Add user message if provided
+    if (messageToSend) {
+      setMessages(prev => [...prev, { role: 'user', content: messageToSend }]);
+      setInput('');
+    }
+
     try {
       const response = await fetch('/api/summarise', {
         method: 'POST',
@@ -172,14 +185,15 @@ export default function ProposalClient() {
         body: JSON.stringify({
           proposalTitle: proposal.title,
           proposalDescription: proposal.description,
+          userMessage: messageToSend || null
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to fetch summary');
+      if (!response.ok) throw new Error('Assistant failed to respond');
       const data = await response.json();
-      setSummary(data.summary);
+      setMessages(prev => [...prev, { role: 'assistant', content: data.text }]);
     } catch (err) {
-      toast("AI summarization failed", "error");
+      toast("AI Assistant failed", "error");
     } finally {
       setIsSummarizing(false);
     }
@@ -262,11 +276,13 @@ export default function ProposalClient() {
                 {/* Parameter Change Detection */}
                 <ProposalDiff title={proposal.title} description={proposal.description} />
 
-                {/* AI Summary Section */}
-                <div className="border border-gray-100 dark:border-gray-800 rounded-3xl overflow-hidden">
+                {/* AI Assistant Section */}
+                <div className="border border-gray-100 dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm">
                     <button 
-                      onClick={handleSummarize}
-                      disabled={isSummarizing}
+                      onClick={() => {
+                        setIsSummaryExpanded(!isSummaryExpanded);
+                        if (!isSummaryExpanded && messages.length === 0) handleSendMessage();
+                      }}
                       className="w-full p-6 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/30 hover:bg-gray-100 dark:hover:bg-gray-900 transition-all min-h-[44px]"
                     >
                       <div className="flex items-center gap-3">
@@ -274,7 +290,7 @@ export default function ProposalClient() {
                           <MessageSquare size={20} />
                         </div>
                         <div className="text-left">
-                           <span className="block text-sm font-black uppercase tracking-widest">AI Summary</span>
+                           <span className="block text-sm font-black uppercase tracking-widest">ArcGov AI Assistant</span>
                            <span className="block text-[10px] font-bold text-gray-400">Powered by Gemini 1.5 Flash</span>
                         </div>
                       </div>
@@ -282,17 +298,49 @@ export default function ProposalClient() {
                     </button>
                     
                     {isSummaryExpanded && (
-                      <div className="p-8 bg-white dark:bg-[#0F1117] border-t border-gray-100 dark:border-gray-800 animate-in slide-in-from-top-2 duration-300">
-                        {isSummarizing ? (
-                          <div className="flex items-center gap-3 text-sm text-gray-500">
-                            <Loader2 className="animate-spin text-[#1D9E75]" size={18} />
-                            Generating proposal insight...
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 italic leading-relaxed">
-                            {summary}
-                          </p>
-                        )}
+                      <div className="bg-white dark:bg-[#0F1117] border-t border-gray-100 dark:border-gray-800 animate-in slide-in-from-top-2 duration-300">
+                        <div className="p-6 max-h-[400px] overflow-y-auto space-y-4">
+                           {messages.length === 0 && !isSummarizing && (
+                              <p className="text-sm text-gray-500 italic text-center py-4">Click to generate a summary or ask a question.</p>
+                           )}
+                           {messages.map((m, i) => (
+                             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
+                                  m.role === 'user' 
+                                    ? 'bg-[#1D9E75] text-white rounded-tr-none' 
+                                    : 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-800 rounded-tl-none whitespace-pre-wrap'
+                                }`}>
+                                   {m.content}
+                                </div>
+                             </div>
+                           ))}
+                           {isSummarizing && (
+                              <div className="flex justify-start">
+                                 <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-2xl rounded-tl-none border border-gray-100 dark:border-gray-800 flex items-center gap-3">
+                                    <Loader2 className="animate-spin text-[#1D9E75]" size={16} />
+                                    <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Thinking...</span>
+                                 </div>
+                              </div>
+                           )}
+                        </div>
+                        
+                        <form onSubmit={(e) => handleSendMessage(e)} className="p-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex gap-2">
+                           <input 
+                              type="text"
+                              placeholder="Ask a question about this proposal..."
+                              className="flex-grow h-12 px-4 bg-white dark:bg-[#0F1117] border border-gray-200 dark:border-gray-800 rounded-xl outline-none focus:ring-2 focus:ring-[#1D9E75] transition-all text-sm"
+                              value={input}
+                              onChange={e => setInput(e.target.value)}
+                              disabled={isSummarizing}
+                           />
+                           <button 
+                              type="submit"
+                              disabled={isSummarizing || !input}
+                              className="w-12 h-12 flex items-center justify-center bg-[#1D9E75] text-white rounded-xl hover:bg-[#0F6E56] transition-all disabled:opacity-50 disabled:grayscale"
+                           >
+                              <ArrowRight size={20} />
+                           </button>
+                        </form>
                       </div>
                     )}
                 </div>
