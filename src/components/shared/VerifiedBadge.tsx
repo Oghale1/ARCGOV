@@ -7,7 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface VerifiedBadgeProps {
   explorerUrl: string;
-  blockNumber?: string | number;
+  blockNumber?: string | number | null;
   lastFetchedAt?: Date | null;
   onRefresh?: () => void;
   isLoading?: boolean;

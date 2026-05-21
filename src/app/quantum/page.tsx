@@ -273,7 +273,7 @@ export default function QuantumReadiness() {
                                {v.quantumChecks?.postQuantumWallet ? (
                                  <CheckCircle2 className="text-[#1D9E75]" size={18} />
                                ) : (
-                                 <X className="text-gray-300 cursor-help" size={18} title="Pending" />
+                                 <X className="text-gray-300 cursor-help" size={18} />
                                )}
                             </div>
                          </td>
@@ -282,7 +282,7 @@ export default function QuantumReadiness() {
                                {v.quantumChecks?.privateStateEncryption ? (
                                  <CheckCircle2 className="text-[#1D9E75]" size={18} />
                                ) : (
-                                 <X className="text-gray-300 cursor-help" size={18} title="Pending" />
+                                 <X className="text-gray-300 cursor-help" size={18} />
                                )}
                             </div>
                          </td>
@@ -291,7 +291,7 @@ export default function QuantumReadiness() {
                                {v.quantumChecks?.signatureHardening ? (
                                  <CheckCircle2 className="text-[#1D9E75]" size={18} />
                                ) : (
-                                 <X className="text-gray-300 cursor-help" size={18} title="Pending" />
+                                 <X className="text-gray-300 cursor-help" size={18} />
                                )}
                             </div>
                          </td>
@@ -322,7 +322,7 @@ export default function QuantumReadiness() {
                            {check.status ? (
                              <CheckCircle2 className="text-[#1D9E75]" size={16} />
                            ) : (
-                             <X className="text-gray-300" size={16} title="Pending" />
+                             <X className="text-gray-300" size={16} />
                            )}
                         </div>
                       ))}

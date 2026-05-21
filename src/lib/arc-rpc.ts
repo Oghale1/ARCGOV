@@ -86,6 +86,25 @@ export async function getUSDCBalance(address: string): Promise<string> {
 }
 
 /**
+ * Fetches the number of blocks validated by a specific address.
+ * On Arc Testnet, this is simulated for now based on address hash
+ * @param address Validator address
+ */
+export async function getBlocksValidatedByAddress(address: string): Promise<number> {
+  if (!address || !address.startsWith('0x')) return 0;
+  
+  try {
+    // In a real scenario, this would query an indexer or RPC
+    // For the dashboard, we derive a stable-ish number from the address
+    const hash = address.slice(2, 10);
+    const seed = parseInt(hash, 16);
+    return Math.floor((seed % 10000) + (Date.now() / 100000000));
+  } catch (error) {
+    return 0;
+  }
+}
+
+/**
  * Checks if the provided chain ID is Arc Testnet
  */
 export function isArcTestnet(chainId: number): boolean {

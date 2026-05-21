@@ -1,11 +1,13 @@
 import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM_EMAIL = process.env.NOTIFICATION_FROM_EMAIL || 'noreply@arcgov.vercel.app';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
+    const FROM_EMAIL = process.env.NOTIFICATION_FROM_EMAIL || 'noreply@arcgov.vercel.app';
+
     const { type, email, data } = await req.json();
 
     if (!email) {

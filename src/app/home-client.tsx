@@ -48,7 +48,7 @@ export default function Home() {
   const [fetchStatus, setFetchStatus] = useState<'success' | 'error'>('success');
 
   // --- FETCH DATA ---
-  const fetchData = async (isManual = true) => {
+  const fetchData = React.useCallback(async (isManual = true) => {
     if (isManual) setIsLoading(true);
     else setIsRefreshing(true);
     
@@ -71,7 +71,7 @@ export default function Home() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     fetchData();
@@ -82,7 +82,7 @@ export default function Home() {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchData]);
 
   // --- HEALTH SCORE CALCULATION ---
   const healthMetrics = useMemo(() => {

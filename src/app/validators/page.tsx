@@ -66,7 +66,7 @@ export default function ValidatorsPage() {
       
       const countsMap: Record<number, number> = {};
       validators.forEach((v, i) => {
-        countsMap[v.id] = counts[i];
+        countsMap[v.id] = counts[i] as number;
       });
       setBlockCounts(countsMap);
       

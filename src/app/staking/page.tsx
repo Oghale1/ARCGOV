@@ -5,6 +5,22 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import Link from 'next/link';
 
+import { 
+  AlertCircle, 
+  Clock, 
+  CheckCircle2, 
+  Coins, 
+  ShieldCheck, 
+  Loader2, 
+  ChevronRight, 
+  Bell, 
+  Mail, 
+  Wallet,
+  ExternalLink,
+  Info,
+  Zap
+} from 'lucide-react';
+
 // Data & Libs
 import validators from '@/data/validators.json';
 import { getAllProposals } from '@/lib/contract';

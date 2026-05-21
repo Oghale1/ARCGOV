@@ -82,6 +82,7 @@ export default function MyDashboard() {
   const [myVotes, setMyVotes] = useState<any[]>([]);
   const [myProposals, setMyProposals] = useState<any[]>([]);
   const [myDelegations, setMyDelegations] = useState<any[]>([]);
+  const [blockNumber, setBlockNumber] = useState<string>('0');
   const [settings, setSettings] = useState({
     email: '',
     new_proposals: true,
@@ -100,16 +101,18 @@ export default function MyDashboard() {
 
     setIsLoading(true);
     try {
-      const [balance, allProposals, delegations, savedSettings] = await Promise.all([
+      const [balance, allProposals, delegations, savedSettings, currentBlock] = await Promise.all([
         getUSDCBalance(address!),
         getAllProposals(),
         supabase.from('delegation_interest').select('*').eq('wallet_address', address),
-        supabase.from('notification_preferences').select('*').eq('wallet_address', address).single()
+        supabase.from('notification_preferences').select('*').eq('wallet_address', address).single(),
+        publicClient?.getBlockNumber()
       ]);
 
       setUsdcBalance(balance);
       setProposals(allProposals || []);
       setMyDelegations(delegations.data || []);
+      setBlockNumber(currentBlock?.toString() || '0');
       
       if (savedSettings.data) {
         setSettings(savedSettings.data);
