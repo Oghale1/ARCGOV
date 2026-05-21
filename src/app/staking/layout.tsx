@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "tARC Staking | ArcGov",
+  title: "tARC Staking",
   description: "Stake tARC and earn rewards on ArcGov. Join the waitlist for Arc Testnet staking — launching after AIP-001 governance vote.",
 };
 

@@ -8,10 +8,10 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const proposals = await getAllProposals();
     const proposal = (proposals as any[]).find(p => p.id.toString() === params.id);
     
-    if (!proposal) return { title: "Proposal | ArcGov" };
+    if (!proposal) return { title: "Proposal" };
     
     return {
-      title: `${proposal.title} | Governance | ArcGov`,
+      title: `${proposal.title} | Governance`,
       description: proposal.description.slice(0, 160),
     };
   } catch (err) {

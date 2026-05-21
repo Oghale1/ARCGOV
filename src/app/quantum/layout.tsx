@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Quantum Readiness Tracker | ArcGov",
+  title: "Quantum Readiness Tracker",
   description: "Track Arc blockchain's quantum-resistant infrastructure upgrade. See which validators have completed post-quantum upgrades.",
 };
 

@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Arc Validators | ArcGov",
+  title: "Arc Validators",
   description: "Track all 8 Arc blockchain validators — uptime, commission rates, quantum readiness, and delegation interest.",
 };
 

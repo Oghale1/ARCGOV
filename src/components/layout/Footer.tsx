@@ -20,14 +20,7 @@ export default function Footer() {
           >
             Embed Widget
           </Link>
-          <a 
-            href="https://github.com/arcgov" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            Open Source on GitHub
-          </a>
+          <span className="text-gray-300 dark:text-gray-700">|</span>
           <span>Not affiliated with Circle</span>
         </div>
       </div>

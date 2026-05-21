@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Embed ArcGov Widget | ArcGov",
+  title: "Embed ArcGov Widget",
   description: "Embed live Arc governance stats on any website with one line of iframe code.",
 };
 

@@ -32,6 +32,8 @@ const navLinks = [
   { name: 'Staking', href: '/staking' },
   { name: 'Quantum', href: '/quantum' },
   { name: 'Architects', href: '/architects' },
+  { name: 'About', href: '/about' },
+  { name: 'My Dashboard', href: '/my-dashboard' },
 ];
 
 export default function Navbar() {

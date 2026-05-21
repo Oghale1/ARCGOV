@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Governance Calendar | ArcGov",
+  title: "Governance Calendar",
   description: "Track Arc governance proposal voting deadlines on a calendar view.",
 };
 
