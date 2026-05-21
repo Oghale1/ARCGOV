@@ -14,7 +14,8 @@ import {
   Loader2,
   Info,
   ChevronRight,
-  AlertTriangle
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
@@ -22,7 +23,6 @@ import dynamic from 'next/dynamic';
 const RadialBarChart = dynamic(() => import('recharts').then(mod => mod.RadialBarChart), { ssr: false });
 const RadialBar = dynamic(() => import('recharts').then(mod => mod.RadialBar), { ssr: false });
 const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false });
-const Cell = dynamic(() => import('recharts').then(mod => mod.Cell), { ssr: false });
 
 // Data & Libs
 import validators from '@/data/validators.json';
@@ -39,11 +39,11 @@ export default function QuantumReadiness() {
 
   // --- CALCULATIONS ---
   const readinessMetrics = useMemo(() => {
-    const total = 8;
+    const total = validators.length;
     const readyCount = (validators as any[]).filter(v => v.quantumStatus === 'ready').length;
     const percentage = (readyCount / total) * 100;
     return {
-      percentage: parseFloat(percentage.toFixed(1)),
+      percentage: Math.round(percentage),
       readyCount,
       total
     };
@@ -106,10 +106,18 @@ export default function QuantumReadiness() {
             QUANTUM-RESISTANT <br />
             <span className="text-[#1D9E75]">INFRASTRUCTURE</span>
           </h1>
-          <p className="max-w-2xl mx-auto text-lg text-gray-500 dark:text-gray-400 font-medium">
+          <p className="max-w-2xl mx-auto text-lg text-gray-500 dark:text-gray-400 font-medium mb-10">
             Arc is building blockchain infrastructure that protects against future quantum computing threats, 
             ensuring institutional assets remain secure for decades to come.
           </p>
+
+          <div className="text-xs text-gray-500 text-center mb-8 px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-lg max-w-2xl mx-auto leading-relaxed">
+            ℹ️ Quantum readiness status is reported by validators and manually verified by the ArcGov team. 
+            Arc Testnet does not publish a real-time quantum upgrade API. 
+            Data is updated when validators confirm milestone completions.
+            <br />
+            Last updated: {new Date().toLocaleDateString()}
+          </div>
         </section>
 
         {/* SECTION 2 — WHY IT MATTERS */}
@@ -229,7 +237,14 @@ export default function QuantumReadiness() {
 
         {/* SECTION 5 — PER-VALIDATOR QUANTUM TABLE */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
-           <h2 className="text-2xl font-black mb-8 text-center md:text-left">Validator Readiness Matrix</h2>
+           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+              <div className="text-center md:text-left">
+                <h2 className="text-3xl font-black mb-2">Validator Readiness Matrix</h2>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                  Matrix last updated: Oct 28, 2025
+                </p>
+              </div>
+           </div>
            
            {/* DESKTOP TABLE */}
            <div className="hidden md:block overflow-x-auto rounded-[32px] border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#0F1117]">
@@ -244,7 +259,7 @@ export default function QuantumReadiness() {
                  </thead>
                  <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
                     {validators.map((v: any) => (
-                      <tr key={v.id} className="hover:bg-gray-50/30 dark:hover:bg-[#1D9E75]/5 transition-colors">
+                      <tr key={v.id} className="hover:bg-gray-50/30 dark:hover:bg-[#1D9E75]/5 transition-colors group">
                          <td className="px-8 py-6">
                             <div className="flex items-center gap-3">
                                <div className="w-8 h-8 rounded-lg bg-[#E1F5EE] dark:bg-[#1D9E75]/10 flex items-center justify-center text-[#1D9E75] font-black text-[10px]">
@@ -255,17 +270,29 @@ export default function QuantumReadiness() {
                          </td>
                          <td className="px-8 py-6">
                             <div className="flex justify-center">
-                               {v.quantumChecks?.postQuantumWallet ? <CheckCircle2 className="text-[#1D9E75]" size={18} /> : <XCircle className="text-gray-300" size={18} />}
+                               {v.quantumChecks?.postQuantumWallet ? (
+                                 <CheckCircle2 className="text-[#1D9E75]" size={18} />
+                               ) : (
+                                 <X className="text-gray-300 cursor-help" size={18} title="Pending" />
+                               )}
                             </div>
                          </td>
                          <td className="px-8 py-6">
                             <div className="flex justify-center">
-                               {v.quantumChecks?.privateStateEncryption ? <CheckCircle2 className="text-[#1D9E75]" size={18} /> : <XCircle className="text-gray-300" size={18} />}
+                               {v.quantumChecks?.privateStateEncryption ? (
+                                 <CheckCircle2 className="text-[#1D9E75]" size={18} />
+                               ) : (
+                                 <X className="text-gray-300 cursor-help" size={18} title="Pending" />
+                               )}
                             </div>
                          </td>
                          <td className="px-8 py-6">
                             <div className="flex justify-center">
-                               {v.quantumChecks?.signatureHardening ? <CheckCircle2 className="text-[#1D9E75]" size={18} /> : <XCircle className="text-gray-300" size={18} />}
+                               {v.quantumChecks?.signatureHardening ? (
+                                 <CheckCircle2 className="text-[#1D9E75]" size={18} />
+                               ) : (
+                                 <X className="text-gray-300 cursor-help" size={18} title="Pending" />
+                               )}
                             </div>
                          </td>
                       </tr>
@@ -292,7 +319,11 @@ export default function QuantumReadiness() {
                       ].map((check) => (
                         <div key={check.label} className="flex flex-col items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-tighter text-center h-4">{check.label}</span>
-                           {check.status ? <CheckCircle2 className="text-[#1D9E75]" size={16} /> : <XCircle className="text-gray-300" size={16} />}
+                           {check.status ? (
+                             <CheckCircle2 className="text-[#1D9E75]" size={16} />
+                           ) : (
+                             <X className="text-gray-300" size={16} title="Pending" />
+                           )}
                         </div>
                       ))}
                    </div>
@@ -308,7 +339,7 @@ export default function QuantumReadiness() {
               <div className="relative z-10 space-y-4">
                  <h2 className="text-3xl font-black">Stay Ahead of the Curve</h2>
                  <p className="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">
-                   Get notified on quantum milestone updates and the latest research from Arc&apos;s post-quantum security labs.
+                   Get notified when validators complete quantum upgrade milestones.
                  </p>
               </div>
 
@@ -342,8 +373,7 @@ export default function QuantumReadiness() {
               )}
            </div>
         </section>
-        </main>
-        </div>
-        );
-        }
-
+      </main>
+    </div>
+  );
+}
