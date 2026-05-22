@@ -38,6 +38,7 @@ import TestnetChip from '@/components/shared/TestnetChip';
 
 export default function Home() {
   const { t } = useTranslation();
+  const [hasMounted, setHasMounted] = useState(false);
   const [networkStats, setNetworkStats] = useState<NetworkStats | null>(null);
   const [proposals, setProposals] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,6 +47,10 @@ export default function Home() {
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
   const [lastKnownBlock, setLastKnownBlock] = useState<string | null>(null);
   const [fetchStatus, setFetchStatus] = useState<'success' | 'error'>('success');
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   // --- FETCH DATA ---
   const fetchData = React.useCallback(async (isManual = true) => {
@@ -143,10 +148,14 @@ export default function Home() {
   return (
     <div className="flex flex-col text-gray-900 dark:text-white">
       {/* SECTION 1 — NETWORK BAR */}
-      <div className="w-full border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 py-3 md:py-2">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] md:text-[11px] font-black tracking-wider uppercase text-gray-500">
-          {isLoading ? (
-            <SkeletonLoader width="200px" height="12px" />
+      <div className="w-full border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 py-3 md:py-2 min-h-[48px] md:min-h-[40px] flex items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] md:text-[11px] font-black tracking-wider uppercase text-gray-500">
+          {!hasMounted || isLoading ? (
+            <div className="flex items-center gap-6">
+              <SkeletonLoader width="80px" height="12px" />
+              <SkeletonLoader width="80px" height="12px" />
+              <SkeletonLoader width="80px" height="12px" />
+            </div>
           ) : (
             <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
               <span className={`flex items-center gap-1.5 whitespace-nowrap transition-opacity duration-500 ${isRefreshing ? 'opacity-50' : 'opacity-100'}`}>
@@ -231,29 +240,39 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-12 mb-24">
           {/* SECTION 4 — GOVERNANCE HEALTH SCORE */}
           <div className="lg:col-span-1 bg-gray-50/50 dark:bg-gray-900/30 rounded-[32px] p-8 flex flex-col items-center justify-center text-center">
-            <div className="relative w-48 h-48 mb-6" style={{ width: '100%', height: 192 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <RadialBarChart 
-                  cx="50%" 
-                  cy="50%" 
-                  innerRadius="80%" 
-                  outerRadius="100%" 
-                  barSize={10} 
-                  data={healthChartData} 
-                  startAngle={90} 
-                  endAngle={-270}
-                >
-                  <RadialBar 
-                    background 
-                    dataKey="value" 
-                    cornerRadius={5}
-                  />
-                </RadialBarChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-5xl font-black" style={{ color: healthMetrics.color }}>{healthMetrics.score}</span>
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Score</span>
-              </div>
+            <div className="relative w-full h-48 mb-6 flex flex-col items-center justify-center">
+              {hasMounted ? (
+                <>
+                  <div className="absolute inset-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadialBarChart 
+                        cx="50%" 
+                        cy="50%" 
+                        innerRadius="80%" 
+                        outerRadius="100%" 
+                        barSize={10} 
+                        data={healthChartData} 
+                        startAngle={90} 
+                        endAngle={-270}
+                      >
+                        <RadialBar 
+                          background 
+                          dataKey="value" 
+                          cornerRadius={5}
+                        />
+                      </RadialBarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="relative z-10 flex flex-col items-center justify-center">
+                    <span className="text-5xl font-black" style={{ color: healthMetrics.color }}>{healthMetrics.score}</span>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Score</span>
+                  </div>
+                </>
+              ) : (
+                <div className="w-32 h-32 rounded-full border-8 border-gray-100 dark:border-gray-800 animate-pulse flex items-center justify-center">
+                  <span className="text-gray-300 font-black text-2xl">--</span>
+                </div>
+              )}
             </div>
             <h3 className="text-xl font-bold mb-2">{t('home.governance_health')}</h3>
             <p className="text-xs text-gray-500 mb-6 max-w-[200px]">
