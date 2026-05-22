@@ -28,6 +28,12 @@ const CATEGORY_COLORS: any = {
 };
 
 export default function ProposalCard({ proposal }: { proposal: Proposal }) {
+  const [hasMounted, setHasMounted] = React.useState(false);
+  
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   const forVotes = Number(proposal.forVotes);
   const againstVotes = Number(proposal.againstVotes);
   const abstainVotes = Number(proposal.abstainVotes);
@@ -52,9 +58,13 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
               </span>
             </div>
             <h3 className="text-xl font-bold group-hover:text-[#1D9E75] transition-colors">{proposal.title}</h3>
-            <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium">
+            <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium h-4">
               <span className="flex items-center gap-1.5"><User size={14} /> Proposed by {proposal.proposer.slice(0, 6)}...{proposal.proposer.slice(-4)}</span>
-              <span className="flex items-center gap-1.5"><Clock size={14} /> {new Date(Number(proposal.timestamp) * 1000).toLocaleDateString()}</span>
+              {hasMounted ? (
+                <span className="flex items-center gap-1.5"><Clock size={14} /> {new Date(Number(proposal.timestamp) * 1000).toLocaleDateString()}</span>
+              ) : (
+                <span className="flex items-center gap-1.5 opacity-0"><Clock size={14} /> --/--/----</span>
+              )}
             </div>
           </div>
           

@@ -39,6 +39,11 @@ export default function ActivityFeed({ maxItems = 10 }: { maxItems?: number }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const fetchActivity = React.useCallback(async () => {
     if (!publicClient) {
@@ -46,56 +51,48 @@ export default function ActivityFeed({ maxItems = 10 }: { maxItems?: number }) {
       return;
     }
 
-    // 10 second timeout logic
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Timeout')), 10000)
-    );
-
     try {
       setIsConnected(true);
       const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = currentBlock - BigInt(100) > BigInt(0) ? currentBlock - BigInt(100) : BigInt(0);
+      const fromBlock = currentBlock - BigInt(200) > BigInt(0) ? currentBlock - BigInt(200) : BigInt(0);
 
-      // Fetch logs with timeout
-      const [proposalLogs, voteLogs]: [any[], any[]] = await Promise.race([
-        Promise.all([
-          publicClient.getContractEvents({
-            address: CONTRACT_ADDRESS,
-            abi: ARCGovCoreABI,
-            eventName: 'ProposalCreated',
-            fromBlock,
-            toBlock: currentBlock
-          }),
-          publicClient.getContractEvents({
-            address: CONTRACT_ADDRESS,
-            abi: ARCGovCoreABI,
-            eventName: 'VoteCast',
-            fromBlock,
-            toBlock: currentBlock
-          })
-        ]),
-        timeoutPromise as Promise<any>
+      // Fetch logs
+      const [proposalLogs, voteLogs] = await Promise.all([
+        publicClient.getContractEvents({
+          address: CONTRACT_ADDRESS,
+          abi: ARCGovCoreABI,
+          eventName: 'ProposalCreated',
+          fromBlock,
+          toBlock: currentBlock
+        }),
+        publicClient.getContractEvents({
+          address: CONTRACT_ADDRESS,
+          abi: ARCGovCoreABI,
+          eventName: 'VoteCast',
+          fromBlock,
+          toBlock: currentBlock
+        })
       ]);
 
       // Merge and format
-      const formattedProposals: ActivityEvent[] = proposalLogs.map((log: any) => ({
+      const formattedProposals: ActivityEvent[] = proposalLogs.map((log: any, index: number) => ({
         type: 'ProposalCreated',
-        id: `p-${log.transactionHash}`,
+        id: `p-${log.transactionHash}-${index}`,
         proposalId: Number(log.args.proposalId),
         title: log.args.title,
         actor: log.args.proposer,
-        timestamp: Date.now(), 
+        timestamp: Date.now() - (Number(currentBlock - log.blockNumber) * 1000), 
         hash: log.transactionHash,
         blockNumber: log.blockNumber
       }));
 
-      const formattedVotes: ActivityEvent[] = voteLogs.map((log: any) => ({
+      const formattedVotes: ActivityEvent[] = voteLogs.map((log: any, index: number) => ({
         type: 'VoteCast',
-        id: `v-${log.transactionHash}`,
+        id: `v-${log.transactionHash}-${index}`,
         proposalId: Number(log.args.proposalId),
         actor: log.args.voter,
         voteType: Number(log.args.voteType),
-        timestamp: Date.now(),
+        timestamp: Date.now() - (Number(currentBlock - log.blockNumber) * 1000),
         hash: log.transactionHash,
         blockNumber: log.blockNumber
       }));

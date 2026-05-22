@@ -82,6 +82,16 @@ export default function ValidatorsPage() {
     fetchData();
   }, []);
 
+  // Scroll Lock for Modal
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isModalOpen]);
+
   // Filter & Sort Logic
   const filteredValidators = useMemo(() => {
     let result = validators.filter(v => {

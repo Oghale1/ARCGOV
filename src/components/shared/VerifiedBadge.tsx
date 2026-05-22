@@ -20,17 +20,26 @@ export default function VerifiedBadge({
   onRefresh, 
   isLoading 
 }: VerifiedBadgeProps) {
-  if (!lastFetchedAt) {
+  if (!lastFetchedAt && isLoading) {
     return (
-      <div className="flex items-center gap-2 animate-pulse py-2">
-        <div className="w-4 h-4 bg-gray-100 dark:bg-gray-800 rounded-full" />
-        <div className="w-32 h-3 bg-gray-100 dark:bg-gray-800 rounded" />
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-2 min-h-[44px]">
+        <div className="flex items-center gap-2 animate-pulse">
+          <div className="w-3 h-3 bg-gray-100 dark:bg-gray-800 rounded-full" />
+          <div className="w-24 h-2.5 bg-gray-100 dark:bg-gray-800 rounded" />
+        </div>
+        <div className="flex items-center gap-3 animate-pulse">
+          <div className="w-16 h-2 bg-gray-100 dark:bg-gray-800 rounded" />
+          <div className="w-1 h-1 rounded-full bg-gray-200 dark:bg-gray-800" />
+          <div className="w-20 h-2 bg-gray-100 dark:bg-gray-800 rounded" />
+        </div>
       </div>
     );
   }
 
+  if (!lastFetchedAt) return <div className="min-h-[44px]" />;
+
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-2">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-2 min-h-[44px]">
       <a 
         href={explorerUrl} 
         target="_blank" 

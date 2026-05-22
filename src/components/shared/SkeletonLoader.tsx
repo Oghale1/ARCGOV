@@ -14,8 +14,10 @@ export default function SkeletonLoader({
 }: SkeletonLoaderProps) {
   return (
     <div 
-      className={`animate-pulse bg-gray-200 dark:bg-gray-800 rounded ${className}`}
+      className={`relative overflow-hidden bg-gray-200 dark:bg-gray-800 rounded ${className}`}
       style={{ width, height }}
-    />
+    >
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+    </div>
   );
 }

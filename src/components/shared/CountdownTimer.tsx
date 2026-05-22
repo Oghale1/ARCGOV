@@ -9,6 +9,7 @@ interface CountdownTimerProps {
 }
 
 export default function CountdownTimer({ deadline }: CountdownTimerProps) {
+  const [hasMounted, setHasMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState<{
     days: number;
     hours: number;
@@ -18,6 +19,7 @@ export default function CountdownTimer({ deadline }: CountdownTimerProps) {
   }>({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: false });
 
   useEffect(() => {
+    setHasMounted(true);
     const calculateTimeLeft = () => {
       const now = new Date().getTime();
       const distance = new Date(deadline).getTime() - now;
@@ -46,6 +48,15 @@ export default function CountdownTimer({ deadline }: CountdownTimerProps) {
 
     return () => clearInterval(timer);
   }, [deadline]);
+
+  if (!hasMounted) {
+    return (
+      <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-200 dark:text-gray-800 uppercase tracking-widest">
+        <Clock size={12} />
+        ---
+      </div>
+    );
+  }
 
   if (timeLeft.isExpired) {
     return (

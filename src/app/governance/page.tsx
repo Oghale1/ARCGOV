@@ -80,6 +80,16 @@ export default function Governance() {
     fetchProposals();
   }, []);
 
+  // Scroll Lock for Modal
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isModalOpen]);
+
   // Merged Proposals
   const proposalsWithMetadata = useMemo(() => {
     return proposals.map(p => {
