@@ -13,7 +13,7 @@ const ARC_CHAIN_ID = 5042002;
 const ARC_RPC_URL = 'https://rpc.testnet.arc.network';
 import type { Proposal } from '@/types';
 import { withRetry } from '@/lib/retry';
-export const ARC_GOV_CORE_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99') as `0x${string}`;
+export const ARC_GOV_CORE_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x6C1c1aB8b4d67C2D39b3d9d9CbF65c72c37fA7Ba') as `0x${string}`;
 
 // Full ABI inline
 export const ARC_GOV_CORE_ABI = parseAbi([

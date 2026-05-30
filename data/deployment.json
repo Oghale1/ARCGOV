@@ -1,0 +1,8 @@
+{
+  "network": "arc-testnet",
+  "chainId": 5042002,
+  "contractName": "ArcGovCore",
+  "address": "0x6C1c1aB8b4d67C2D39b3d9d9CbF65c72c37fA7Ba",
+  "deployer": "0x196288da05b125e42Eb92bAB38F4ed7642dc8522",
+  "deployedAt": "2026-05-30T11:26:19.730Z"
+}
