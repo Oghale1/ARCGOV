@@ -23,5 +23,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "scripts", "test", "hardhat.config.js"]
+  "exclude": ["node_modules", "scripts", "test", "hardhat.config.js", "vitest.config.ts", "src/**/*.test.ts", "src/**/*.test.tsx"]
 }

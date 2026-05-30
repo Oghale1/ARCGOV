@@ -1,4 +1,4 @@
-// ArcGov — Built by Gemini — arcgov.xyz
+// ArcGov — Built by Gemini — arcgov.vercel.app
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });

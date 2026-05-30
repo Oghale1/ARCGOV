@@ -1,12 +1,9 @@
 // ArcGov — arcgov.vercel.app
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import LayoutContent from "./layout-content";
 import { Analytics } from "@vercel/analytics/react";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://arcgov.vercel.app"),
@@ -32,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} bg-white dark:bg-[#0F1117] text-black dark:text-white min-h-screen flex flex-col`}>
+      <body className="font-sans bg-white dark:bg-[#0F1117] text-black dark:text-white min-h-screen flex flex-col">
         <Providers>
           <LayoutContent>
             {children}

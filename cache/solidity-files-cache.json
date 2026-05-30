@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\DELL\\Desktop\\ARCGOV\\contracts\\ArcGovCore.sol": {
-      "lastModificationDate": 1778138131952,
-      "contentHash": "1cb2255359919d8e42a0e6127e63678a",
+      "lastModificationDate": 1780137231838,
+      "contentHash": "b94ebd06db2adecdf40397b8b0d8d90d",
       "sourceName": "contracts/ArcGovCore.sol",
       "solcConfig": {
         "version": "0.8.20",

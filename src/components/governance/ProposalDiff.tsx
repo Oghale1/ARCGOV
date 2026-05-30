@@ -1,5 +1,5 @@
 'use client';
-// ArcGov — Built by Gemini — arcgov.xyz
+// ArcGov — Built by Gemini — arcgov.vercel.app
 
 import React, { useMemo } from 'react';
 import { ArrowRight, Info, Zap } from 'lucide-react';

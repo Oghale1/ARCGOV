@@ -1,5 +1,5 @@
 'use client';
-// ArcGov — Built by Gemini — arcgov.xyz
+// ArcGov — Built by Gemini — arcgov.vercel.app
 
 import React, { useState, useEffect } from 'react';
 import { usePublicClient } from 'wagmi';

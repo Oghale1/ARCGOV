@@ -1,4 +1,4 @@
-// ArcGov — Built by Gemini — arcgov.xyz
+// ArcGov — Built by Gemini — arcgov.vercel.app
 import { Metadata } from 'next';
 import ValidatorClient from './validator-client';
 import validators from '@/data/validators.json';

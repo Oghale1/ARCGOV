@@ -1,5 +1,5 @@
 'use client';
-// ArcGov — Built by Gemini — arcgov.xyz
+// ArcGov — Built by Gemini — arcgov.vercel.app
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
@@ -50,6 +50,7 @@ import VerifiedBadge from '@/components/shared/VerifiedBadge';
 import TestnetChip from '@/components/shared/TestnetChip';
 import supabase from '@/lib/supabase';
 import { useAccount } from 'wagmi';
+import type { Validator } from '@/types';
 
 export default function ValidatorClient() {
   const { id } = useParams();
@@ -72,7 +73,7 @@ export default function ValidatorClient() {
   const [error, setError] = useState<string | null>(null);
 
   const validator = useMemo(() => {
-    return (validators as any[]).find(v => v.id.toString() === id);
+    return (validators as Validator[]).find(v => v.id.toString() === id);
   }, [id]);
 
   // Fetch Live Data

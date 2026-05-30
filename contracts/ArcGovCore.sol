@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
-// ArcGov — arcgov.vercel.app
-
 pragma solidity ^0.8.20;
 
 /**
  * @title ArcGovCore
- * @dev The central governance contract for ArcGov, handling proposals and voting on the Arc blockchain.
+ * @notice Community governance for the Arc blockchain. Handles proposals,
+ *         voting, and a simple "execution" (closing) step with a quorum.
+ * @dev Voting is 1-address-1-vote (Sybil-resistant via future token gating).
  */
 contract ArcGovCore {
-    // --- DATA STRUCTURES ---
-
     enum Category { VALIDATOR, PARAMETER, UPGRADE, ECOSYSTEM }
     enum VoteType { FOR, AGAINST, ABSTAIN }
 
@@ -28,82 +26,45 @@ contract ArcGovCore {
         bool isOpen;
     }
 
-    mapping(uint256 => Proposal) public proposals;
+    mapping(uint256 => Proposal) private proposals;
     mapping(uint256 => mapping(address => bool)) public hasVoted;
     mapping(uint256 => mapping(address => VoteType)) public voterChoice;
-    
-    uint256 public proposalCount = 0;
-    uint256 public constant VOTING_PERIOD = 7 days;
-    address public owner;
+    uint256 public proposalCount;
 
-    // --- EVENTS ---
+    address public admin;
 
-    event ProposalCreated(
-        uint256 indexed id, 
-        address indexed proposer, 
-        string title, 
-        Category category,
-        uint256 votingDeadline
-    );
+    /// @notice Minimum number of total votes for a proposal to be able to pass.
+    uint256 public constant QUORUM = 5;
 
-    event VoteCast(
-        uint256 indexed proposalId, 
-        address indexed voter, 
-        VoteType voteType,
-        uint256 newForVotes,
-        uint256 newAgainstVotes,
-        uint256 newAbstainVotes
-    );
+    event ProposalCreated(uint256 indexed id, address indexed proposer, string title, Category category, uint256 votingDeadline);
+    event VoteCast(uint256 indexed proposalId, address indexed voter, VoteType voteType, uint256 newForVotes, uint256 newAgainstVotes, uint256 newAbstainVotes);
+    event ProposalExecuted(uint256 indexed id, bool passed, uint256 forVotes, uint256 againstVotes);
 
-    event ProposalClosed(uint256 indexed id, bool passed);
-
-    // --- CONSTRUCTOR ---
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Not admin");
+        _;
+    }
 
     constructor() {
-        owner = msg.sender;
+        admin = msg.sender;
     }
 
-    // --- MODIFIERS ---
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Caller is not the owner");
-        _;
-    }
-
-    modifier proposalExists(uint256 id) {
-        require(id > 0 && id <= proposalCount, "Proposal does not exist");
-        _;
-    }
-
-    modifier votingOpen(uint256 id) {
-        require(proposals[id].isOpen, "Voting is already closed");
-        require(block.timestamp <= proposals[id].votingDeadline, "Voting period has ended");
-        _;
-    }
-
-    // --- FUNCTIONS ---
-
-    /**
-     * @dev Submits a new governance proposal to the contract.
-     */
     function submitProposal(
-        string memory _title,
-        string memory _description, 
-        Category _category,
-        string memory _ipfsHash
+        string memory title,
+        string memory description,
+        Category category,
+        string memory ipfsHash
     ) external returns (uint256) {
-        require(bytes(_title).length > 0, "Title cannot be empty");
-        require(bytes(_description).length > 0, "Description cannot be empty");
-
         proposalCount++;
-        uint256 deadline = block.timestamp + VOTING_PERIOD;
+        uint256 newId = proposalCount;
+        uint256 deadline = block.timestamp + 7 days;
 
-        proposals[proposalCount] = Proposal({
-            id: proposalCount,
-            title: _title,
-            description: _description,
-            category: _category,
-            ipfsHash: _ipfsHash,
+        proposals[newId] = Proposal({
+            id: newId,
+            title: title,
+            description: description,
+            category: category,
+            ipfsHash: ipfsHash,
             proposer: msg.sender,
             createdAt: block.timestamp,
             votingDeadline: deadline,
@@ -113,104 +74,77 @@ contract ArcGovCore {
             isOpen: true
         });
 
-        emit ProposalCreated(proposalCount, msg.sender, _title, _category, deadline);
-        return proposalCount;
+        emit ProposalCreated(newId, msg.sender, title, category, deadline);
+        return newId;
     }
 
-    /**
-     * @dev Casts a vote on a specific active proposal.
-     */
-    function castVote(
-        uint256 _proposalId, 
-        VoteType _voteType
-    ) external proposalExists(_proposalId) votingOpen(_proposalId) returns (bool) {
-        require(!hasVoted[_proposalId][msg.sender], "Already voted on this proposal");
+    function castVote(uint256 proposalId, VoteType voteType) external returns (bool) {
+        require(proposalId > 0 && proposalId <= proposalCount, "Invalid proposal");
+        require(proposals[proposalId].isOpen, "Proposal closed");
+        require(!hasVoted[proposalId][msg.sender], "Already voted");
+        require(block.timestamp <= proposals[proposalId].votingDeadline, "Voting ended");
 
-        hasVoted[_proposalId][msg.sender] = true;
-        voterChoice[_proposalId][msg.sender] = _voteType;
+        hasVoted[proposalId][msg.sender] = true;
+        voterChoice[proposalId][msg.sender] = voteType;
 
-        Proposal storage p = proposals[_proposalId];
-
-        if (_voteType == VoteType.FOR) {
+        Proposal storage p = proposals[proposalId];
+        if (voteType == VoteType.FOR) {
             p.forVotes++;
-        } else if (_voteType == VoteType.AGAINST) {
+        } else if (voteType == VoteType.AGAINST) {
             p.againstVotes++;
-        } else if (_voteType == VoteType.ABSTAIN) {
+        } else {
             p.abstainVotes++;
         }
 
-        emit VoteCast(_proposalId, msg.sender, _voteType, p.forVotes, p.againstVotes, p.abstainVotes);
+        emit VoteCast(proposalId, msg.sender, voteType, p.forVotes, p.againstVotes, p.abstainVotes);
         return true;
     }
 
     /**
-     * @dev Manually closes a proposal and records the outcome (Owner only).
+     * @notice Closes a proposal after its deadline and records the result.
+     *         Anyone can call this once voting has ended — this is the
+     *         "execution" step. A proposal passes only if it reaches QUORUM
+     *         total votes AND has more FOR than AGAINST votes.
      */
-    function closeProposal(uint256 _proposalId) external onlyOwner proposalExists(_proposalId) {
-        Proposal storage p = proposals[_proposalId];
-        p.isOpen = false;
-        
-        bool passed = p.forVotes > p.againstVotes;
-        emit ProposalClosed(_proposalId, passed);
-    }
-
-    /**
-     * @dev Allows anyone to close a proposal if the voting deadline has passed.
-     */
-    function autoCloseIfExpired(uint256 _proposalId) external proposalExists(_proposalId) {
-        Proposal storage p = proposals[_proposalId];
-        require(p.isOpen, "Proposal already closed");
-        require(block.timestamp > p.votingDeadline, "Voting deadline has not passed yet");
+    function closeProposal(uint256 proposalId) external returns (bool passed) {
+        require(proposalId > 0 && proposalId <= proposalCount, "Invalid proposal");
+        Proposal storage p = proposals[proposalId];
+        require(p.isOpen, "Already closed");
+        require(block.timestamp > p.votingDeadline, "Voting not ended");
 
         p.isOpen = false;
-        bool passed = p.forVotes > p.againstVotes;
-        emit ProposalClosed(_proposalId, passed);
+
+        uint256 totalVotes = p.forVotes + p.againstVotes + p.abstainVotes;
+        passed = totalVotes >= QUORUM && p.forVotes > p.againstVotes;
+
+        emit ProposalExecuted(proposalId, passed, p.forVotes, p.againstVotes);
+        return passed;
     }
 
-    /**
-     * @dev Returns the full details of a specific proposal.
-     */
-    function getProposal(uint256 _id) external view proposalExists(_id) returns (Proposal memory) {
-        return proposals[_id];
+    function getProposal(uint256 id) external view returns (Proposal memory) {
+        require(id > 0 && id <= proposalCount, "Invalid proposal");
+        return proposals[id];
     }
 
-    /**
-     * @dev Returns an array containing all proposals created so far.
-     */
     function getAllProposals() external view returns (Proposal[] memory) {
-        Proposal[] memory allProposals = new Proposal[](proposalCount);
+        Proposal[] memory all = new Proposal[](proposalCount);
         for (uint256 i = 1; i <= proposalCount; i++) {
-            allProposals[i - 1] = proposals[i];
+            all[i - 1] = proposals[i];
         }
-        return allProposals;
+        return all;
     }
 
-    /**
-     * @dev Returns the total number of proposals submitted.
-     */
     function getProposalCount() external view returns (uint256) {
         return proposalCount;
     }
 
-    /**
-     * @dev Checks if a specific address has already voted on a proposal.
-     */
-    function hasVotedOn(uint256 _proposalId, address _voter) external view returns (bool) {
-        return hasVoted[_proposalId][_voter];
+    /// @notice True if `voter` has already voted on `proposalId`.
+    function hasVotedOn(uint256 proposalId, address voter) external view returns (bool) {
+        return hasVoted[proposalId][voter];
     }
 
-    /**
-     * @dev Returns the specific vote choice made by a voter on a proposal.
-     */
-    function getVoterChoice(uint256 _proposalId, address _voter) external view returns (VoteType) {
-        return voterChoice[_proposalId][_voter];
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new address.
-     */
-    function transferOwnership(address _newOwner) external onlyOwner {
-        require(_newOwner != address(0), "New owner cannot be the zero address");
-        owner = _newOwner;
+    /// @notice The vote a `voter` cast (0 = FOR, 1 = AGAINST, 2 = ABSTAIN).
+    function getVoterChoice(uint256 proposalId, address voter) external view returns (uint8) {
+        return uint8(voterChoice[proposalId][voter]);
     }
 }

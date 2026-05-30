@@ -11,6 +11,8 @@ import {
 // Arc Testnet Configuration
 const ARC_CHAIN_ID = 5042002;
 const ARC_RPC_URL = 'https://rpc.testnet.arc.network';
+import type { Proposal } from '@/types';
+import { withRetry } from '@/lib/retry';
 export const ARC_GOV_CORE_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99') as `0x${string}`;
 
 // Full ABI inline
@@ -18,13 +20,15 @@ export const ARC_GOV_CORE_ABI = parseAbi([
   "struct Proposal { uint256 id; string title; string description; uint8 category; string ipfsHash; address proposer; uint256 createdAt; uint256 votingDeadline; uint256 forVotes; uint256 againstVotes; uint256 abstainVotes; bool isOpen; }",
   "function submitProposal(string title, string description, uint8 category, string ipfsHash) returns (uint256)",
   "function castVote(uint256 proposalId, uint8 voteType) returns (bool)",
+  "function closeProposal(uint256 proposalId) returns (bool)",
   "function getProposal(uint256 id) view returns (Proposal)",
   "function getAllProposals() view returns (Proposal[])",
   "function hasVotedOn(uint256 proposalId, address voter) view returns (bool)",
   "function getProposalCount() view returns (uint256)",
   "function getVoterChoice(uint256 proposalId, address voter) view returns (uint8)",
   "event ProposalCreated(uint256 indexed id, address indexed proposer, string title, uint8 category, uint256 votingDeadline)",
-  "event VoteCast(uint256 indexed proposalId, address indexed voter, uint8 voteType, uint256 newForVotes, uint256 newAgainstVotes, uint256 newAbstainVotes)"
+  "event VoteCast(uint256 indexed proposalId, address indexed voter, uint8 voteType, uint256 newForVotes, uint256 newAgainstVotes, uint256 newAbstainVotes)",
+  "event ProposalExecuted(uint256 indexed id, bool passed, uint256 forVotes, uint256 againstVotes)"
 ]);
 
 // Deprecated aliases for backward compatibility if any
@@ -39,14 +43,16 @@ const publicClient = createPublicClient({
 /**
  * Fetches all proposals from the contract
  */
-export async function getAllProposals(): Promise<any[]> {
+export async function getAllProposals(): Promise<Proposal[]> {
   try {
-    const proposals = await publicClient.readContract({
-      address: CONTRACT_ADDRESS,
-      abi: ARCGovCoreABI,
-      functionName: 'getAllProposals',
-    });
-    return proposals as any[];
+    const proposals = await withRetry(() =>
+      publicClient.readContract({
+        address: CONTRACT_ADDRESS,
+        abi: ARCGovCoreABI,
+        functionName: 'getAllProposals',
+      })
+    );
+    return proposals as Proposal[];
   } catch (error) {
     console.error('Error in getAllProposals:', error);
     return [];
@@ -56,7 +62,7 @@ export async function getAllProposals(): Promise<any[]> {
 /**
  * Fetches a single proposal by ID
  */
-export async function getProposal(id: number): Promise<any> {
+export async function getProposal(id: number): Promise<Proposal | null> {
   try {
     const proposal = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
@@ -64,7 +70,7 @@ export async function getProposal(id: number): Promise<any> {
       functionName: 'getProposal',
       args: [BigInt(id)],
     });
-    return proposal;
+    return proposal as Proposal;
   } catch (error) {
     console.error(`Error in getProposal(${id}):`, error);
     return null;
@@ -204,6 +210,37 @@ export async function castVote(
     return hash;
   } catch (error) {
     console.error('Error in castVote:', error);
+    throw error;
+  }
+}
+
+/**
+ * Closes a proposal after its voting deadline (the "execution" step).
+ * Anyone can call this once voting has ended; the contract records whether
+ * the proposal passed (quorum reached AND more FOR than AGAINST).
+ *
+ * NOTE: this requires the updated ArcGovCore contract to be deployed. See
+ * ONCHAIN.md for deploy steps. Calling it against the current deployment will
+ * revert until you redeploy.
+ */
+export async function closeProposal(
+  proposalId: number,
+  walletClient: WalletClient,
+  publicClientForWrite: PublicClient
+) {
+  try {
+    const [address] = await walletClient.getAddresses();
+    const { request } = await publicClientForWrite.simulateContract({
+      account: address,
+      address: CONTRACT_ADDRESS,
+      abi: ARCGovCoreABI,
+      functionName: 'closeProposal',
+      args: [BigInt(proposalId)],
+    });
+    const hash = await walletClient.writeContract(request);
+    return hash;
+  } catch (error) {
+    console.error('Error in closeProposal:', error);
     throw error;
   }
 }

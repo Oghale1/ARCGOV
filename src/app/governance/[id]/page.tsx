@@ -1,4 +1,4 @@
-// ArcGov — Built by Gemini — arcgov.xyz
+// ArcGov — Built by Gemini — arcgov.vercel.app
 import { Metadata } from 'next';
 import ProposalClient from './proposal-client';
 import { getAllProposals } from '@/lib/contract';

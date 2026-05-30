@@ -1,5 +1,5 @@
 'use client';
-// ArcGov — Built by Gemini — arcgov.xyz
+// ArcGov — Built by Gemini — arcgov.vercel.app
 
 import React, { useState, useMemo, useEffect } from 'react';
 import QuantumBadge from '@/components/validators/QuantumBadge';
@@ -22,7 +22,8 @@ import {
   Filter
 } from 'lucide-react';
 import Link from 'next/link';
-import { getBlockNumberFormatted, getBlocksValidatedByAddress } from '@/lib/arc-rpc';
+import { getBlockNumberFormatted } from '@/lib/arc-rpc';
+import { getBlockCounts } from '@/lib/validators';
 
 export default function ValidatorsPage() {
   const [search, setSearch] = useState('');
@@ -58,18 +59,12 @@ export default function ValidatorsPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [block, ...counts] = await Promise.all([
+      const [block, countsMap] = await Promise.all([
         getBlockNumberFormatted(),
-        ...validators.map(v => getBlocksValidatedByAddress(v.validatorAddress))
+        getBlockCounts()
       ]);
       setBlockNumber(block);
-      
-      const countsMap: Record<number, number> = {};
-      validators.forEach((v, i) => {
-        countsMap[v.id] = counts[i] as number;
-      });
       setBlockCounts(countsMap);
-      
       setLastFetchedAt(new Date());
     } catch (err) {
       console.error(err);

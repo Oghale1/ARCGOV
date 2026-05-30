@@ -1,4 +1,4 @@
-// ArcGov — Built by Gemini — arcgov.xyz
+// ArcGov — Built by Gemini — arcgov.vercel.app
 import React from 'react';
 
 export default function TestnetChip() {

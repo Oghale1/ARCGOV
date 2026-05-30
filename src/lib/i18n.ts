@@ -1,5 +1,5 @@
 'use client';
-// ArcGov — Built by Gemini — arcgov.xyz
+// ArcGov — Built by Gemini — arcgov.vercel.app
 
 import { useState, useEffect, useCallback } from 'react';
 import en from '@/messages/en.json';

@@ -1,5 +1,6 @@
 // ArcGov — arcgov.vercel.app
 import { createPublicClient, http, formatUnits, erc20Abi } from 'viem';
+import { withRetry } from '@/lib/retry';
 
 // Arc Testnet Configuration
 const ARC_CHAIN_ID = 5042002;
@@ -23,7 +24,7 @@ export interface NetworkStats {
  */
 export async function getBlockNumber(): Promise<bigint | null> {
   try {
-    return await publicClient.getBlockNumber();
+    return await withRetry(() => publicClient.getBlockNumber());
   } catch (error) {
     console.error('Error fetching block number:', error);
     return null;
@@ -85,24 +86,10 @@ export async function getUSDCBalance(address: string): Promise<string> {
   }
 }
 
-/**
- * Fetches the number of blocks validated by a specific address.
- * On Arc Testnet, this is simulated for now based on address hash
- * @param address Validator address
- */
-export async function getBlocksValidatedByAddress(address: string): Promise<number> {
-  if (!address || !address.startsWith('0x')) return 0;
-  
-  try {
-    // In a real scenario, this would query an indexer or RPC
-    // For the dashboard, we derive a stable-ish number from the address
-    const hash = address.slice(2, 10);
-    const seed = parseInt(hash, 16);
-    return Math.floor((seed % 10000) + (Date.now() / 100000000));
-  } catch (error) {
-    return 0;
-  }
-}
+// NOTE: "blocks validated per address" now lives in `src/lib/validator-stats.ts`
+// and reads REAL data from the Arc block explorer (Blockscout). The previous
+// version here invented a number from the address + the current time, which
+// looked live but was fake — it has been removed to keep the dashboard honest.
 
 /**
  * Checks if the provided chain ID is Arc Testnet
