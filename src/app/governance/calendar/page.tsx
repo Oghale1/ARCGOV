@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { getAllProposals } from '@/lib/contract';
+import supabase from '@/lib/supabase';
+import { getVotingStart, getEffectiveDeadline, getProposalStatus } from '@/lib/proposal-status';
 
 const CATEGORY_LABELS = ['VALIDATOR', 'PARAMETER', 'UPGRADE', 'ECOSYSTEM'];
 const CATEGORY_COLORS: any = {
@@ -30,8 +32,19 @@ export default function GovernanceCalendar() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const all = await getAllProposals();
-        setProposals((all as any[]) || []);
+        const [all, meta] = await Promise.all([
+          getAllProposals(),
+          supabase.from('proposal_metadata').select('*').then(r => r.data || [], () => [])
+        ]);
+        const merged = ((all as any[]) || []).map(p => {
+          const m = (meta as any[]).find(x => x.proposal_id === p.id.toString());
+          return {
+            ...p,
+            customStart: m && m.custom_start ? new Date(m.custom_start) : new Date(Number(p.createdAt) * 1000),
+            customDeadline: m ? new Date(m.custom_deadline) : new Date(Number(p.votingDeadline) * 1000)
+          };
+        });
+        setProposals(merged);
       } catch (err) {
         console.error(err);
       } finally {
@@ -100,31 +113,49 @@ export default function GovernanceCalendar() {
     // Current month days
     for (let d = 1; d <= totalDays; d++) {
       const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-      
-      const activeOnDay = proposals.filter(p => {
-        if (!p.isOpen) return false;
-        const deadline = new Date(Number(p.timestamp) * 1000 + (7 * 24 * 60 * 60 * 1000));
-        return deadline.getDate() === d && deadline.getMonth() === month && deadline.getFullYear() === year;
-      });
+
+      const onDay = (date: Date) =>
+        date.getDate() === d && date.getMonth() === month && date.getFullYear() === year;
+
+      // Proposals that OPEN (voting starts) on this day, and that CLOSE on this day.
+      const opensOnDay = proposals.filter(p => onDay(getVotingStart(p)));
+      const closesOnDay = proposals.filter(p => onDay(getEffectiveDeadline(p)));
 
       cells.push(
         <div key={d} className={`relative min-h-[80px] md:min-h-[120px] border border-gray-100 dark:border-gray-800 p-3 md:p-4 transition-all bg-white dark:bg-[#0F1117] ${isToday ? 'ring-2 ring-inset ring-[#1D9E75] rounded-lg z-10' : ''}`}>
           <span className={`text-sm font-black ${isToday ? 'text-[#1D9E75]' : 'text-gray-400'}`}>{d}</span>
           <div className="mt-1 md:mt-2 space-y-1">
-             {activeOnDay.map((p) => (
-               <Link 
-                key={p.id.toString()} 
+             {opensOnDay.map((p) => (
+               <Link
+                key={`open-${p.id.toString()}`}
                 href={`/governance/${p.id}`}
                 onMouseEnter={() => setHoveredProposal(p)}
                 onMouseLeave={() => setHoveredProposal(null)}
                 className="block group"
                >
-                  <div className="flex items-center gap-1.5 p-1 bg-[#1D9E75]/10 border border-[#1D9E75]/20 rounded-md hover:bg-[#1D9E75] transition-all">
-                     <div className="w-1 h-1 rounded-full bg-[#1D9E75] group-hover:bg-white animate-pulse shrink-0" />
-                     <span className="text-[8px] md:text-[9px] font-bold text-[#1D9E75] group-hover:text-white truncate">#{p.id.toString()}</span>
+                  <div className="flex items-center gap-1.5 p-1 bg-blue-500/10 border border-blue-500/20 rounded-md hover:bg-blue-500 transition-all">
+                     <div className="w-1 h-1 rounded-full bg-blue-500 group-hover:bg-white shrink-0" />
+                     <span className="text-[8px] md:text-[9px] font-bold text-blue-600 dark:text-blue-400 group-hover:text-white truncate">#{p.id.toString()} opened</span>
                   </div>
                </Link>
              ))}
+             {closesOnDay.map((p) => {
+               const active = getProposalStatus(p) === 'Active';
+               return (
+                 <Link
+                  key={`close-${p.id.toString()}`}
+                  href={`/governance/${p.id}`}
+                  onMouseEnter={() => setHoveredProposal(p)}
+                  onMouseLeave={() => setHoveredProposal(null)}
+                  className="block group"
+                 >
+                    <div className={`flex items-center gap-1.5 p-1 rounded-md border transition-all ${active ? 'bg-[#1D9E75]/10 border-[#1D9E75]/20 hover:bg-[#1D9E75]' : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-300 dark:hover:bg-gray-700'}`}>
+                       <div className={`w-1 h-1 rounded-full shrink-0 ${active ? 'bg-[#1D9E75] animate-pulse group-hover:bg-white' : 'bg-gray-400'}`} />
+                       <span className={`text-[8px] md:text-[9px] font-bold truncate ${active ? 'text-[#1D9E75] group-hover:text-white' : 'text-gray-500'}`}>#{p.id.toString()} {active ? 'closes' : 'closed'}</span>
+                    </div>
+                 </Link>
+               );
+             })}
           </div>
         </div>
       );
@@ -146,9 +177,9 @@ export default function GovernanceCalendar() {
   const upcomingDeadlines = useMemo(() => {
     const now = new Date();
     return proposals
-      .filter(p => p.isOpen)
+      .filter(p => getProposalStatus(p) === 'Active')
       .map(p => {
-        const deadline = new Date(Number(p.timestamp) * 1000 + (7 * 24 * 60 * 60 * 1000));
+        const deadline = getEffectiveDeadline(p);
         const diffTime = deadline.getTime() - now.getTime();
         const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         return { ...p, deadline, daysLeft };
@@ -173,6 +204,11 @@ export default function GovernanceCalendar() {
           <div className="space-y-12">
             <div>
                {renderHeader()}
+               <div className="flex flex-wrap items-center gap-4 mb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500" /> Opened</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#1D9E75]" /> Closing</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400" /> Closed</span>
+               </div>
                <div className="grid grid-cols-7 mb-4">
                   {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
                     <div key={day} className="text-center text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 py-2">{day}</div>

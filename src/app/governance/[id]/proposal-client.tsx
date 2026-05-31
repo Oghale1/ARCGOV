@@ -39,7 +39,7 @@ import {
   getProposalCount
 } from '@/lib/contract';
 import { getBlockNumberFormatted } from '@/lib/arc-rpc';
-import { isVotingActive } from '@/lib/proposal-status';
+import { isVotingActive, getVotingStart, getEffectiveDeadline } from '@/lib/proposal-status';
 import { useToast } from '@/components/shared/Toast';
 import supabase from '@/lib/supabase';
 
@@ -64,6 +64,7 @@ export default function ProposalClient() {
   const router = useRouter();
   const [proposal, setProposal] = useState<any>(null);
   const [customDeadline, setCustomDeadline] = useState<Date | null>(null);
+  const [customStart, setCustomStart] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
@@ -104,8 +105,10 @@ export default function ProposalClient() {
         
         if (meta.data) {
           setCustomDeadline(new Date(meta.data.custom_deadline));
+          setCustomStart(meta.data.custom_start ? new Date(meta.data.custom_start) : new Date(Number(found.createdAt) * 1000));
         } else {
           setCustomDeadline(new Date(Number(found.votingDeadline) * 1000));
+          setCustomStart(new Date(Number(found.createdAt) * 1000));
         }
 
         if (isConnected && address) {
@@ -205,11 +208,13 @@ export default function ProposalClient() {
   const againstPercent = totalVotes > 0 ? (Number(proposal.againstVotes) / totalVotes) * 100 : 0;
   const abstainPercent = totalVotes > 0 ? (Number(proposal.abstainVotes) / totalVotes) * 100 : 0;
 
-  // Proposal merged with its off-chain custom deadline, for status + countdown.
-  const proposalView = proposal ? { ...proposal, customDeadline } : null;
+  // Proposal merged with its off-chain custom start/deadline, for status + window.
+  const proposalView = proposal ? { ...proposal, customStart, customDeadline } : null;
   // Voting is only genuinely open while the deadline is in the future — the
   // on-chain `isOpen` flag alone can lag behind (it's cleared only on close).
   const votingActive = proposalView ? isVotingActive(proposalView) : false;
+  const votingStart = proposalView ? getVotingStart(proposalView) : null;
+  const votingEnd = proposalView ? getEffectiveDeadline(proposalView) : null;
 
   if (error) {
     return (
@@ -255,9 +260,11 @@ export default function ProposalClient() {
                 <span className="text-xs text-gray-500 flex items-center gap-1.5">
                   <User size={14} /> Proposed by {proposal.proposer.slice(0, 6)}...{proposal.proposer.slice(-4)}
                 </span>
-                <span className="text-xs text-gray-500 flex items-center gap-1.5">
-                  <Clock size={14} /> {new Date(Number(proposal.timestamp) * 1000).toLocaleDateString()}
-                </span>
+                {votingStart && votingEnd && (
+                  <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                    <Clock size={14} /> Voting {votingStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – {votingEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                )}
               </div>
             </header>
 

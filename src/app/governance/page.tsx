@@ -97,6 +97,7 @@ export default function Governance() {
       const m = metadata.find(meta => meta.proposal_id === p.id.toString());
       return {
         ...p,
+        customStart: m && m.custom_start ? new Date(m.custom_start) : new Date(Number(p.createdAt) * 1000),
         customDeadline: m ? new Date(m.custom_deadline) : new Date(Number(p.votingDeadline) * 1000)
       };
     });
@@ -133,8 +134,24 @@ export default function Governance() {
     category: 0,
     rationale: '',
     votingPeriod: '7',
+    customStart: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
     customDeadline: format(addDays(new Date(), 7), "yyyy-MM-dd'T'HH:mm")
   });
+
+  // The start/end the proposal's voting window will actually use, derived from
+  // the selected period. Presets start now; "custom" uses the picked start/end.
+  const votingWindow = useMemo(() => {
+    const start = formData.votingPeriod === 'custom' && formData.customStart
+      ? new Date(formData.customStart)
+      : new Date();
+    const end = formData.votingPeriod === 'custom'
+      ? new Date(formData.customDeadline)
+      : addDays(start, parseInt(formData.votingPeriod));
+    const ms = end.getTime() - start.getTime();
+    const days = ms > 0 ? Math.round(ms / (1000 * 60 * 60 * 24)) : 0;
+    const valid = end.getTime() > start.getTime();
+    return { start, end, days, valid };
+  }, [formData.votingPeriod, formData.customStart, formData.customDeadline]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,14 +162,27 @@ export default function Governance() {
       return;
     }
 
+    // Voting window from the selected period.
+    const start = formData.votingPeriod === 'custom'
+      ? new Date(formData.customStart)
+      : new Date();
+    const deadline = formData.votingPeriod === 'custom'
+      ? new Date(formData.customDeadline)
+      : addDays(new Date(), parseInt(formData.votingPeriod));
+
+    if (deadline.getTime() <= start.getTime()) {
+      toast("Voting end must be after the start", "error");
+      return;
+    }
+
     const toastId = toast("Submitting to Arc Testnet...", "loading");
     setIsSubmitting(true);
 
     try {
-      const fullDescription = formData.rationale 
-        ? `${formData.description}\n\nWHY THIS MATTERS:\n${formData.rationale}` 
+      const fullDescription = formData.rationale
+        ? `${formData.description}\n\nWHY THIS MATTERS:\n${formData.rationale}`
         : formData.description;
-      
+
       const { hash, proposalId } = await submitProposal(
         formData.title,
         fullDescription,
@@ -161,24 +191,29 @@ export default function Governance() {
         publicClient as any
       );
 
-      // Store Metadata in Supabase
-      const deadline = formData.votingPeriod === 'custom' 
-        ? new Date(formData.customDeadline)
-        : addDays(new Date(), parseInt(formData.votingPeriod));
-
-      await supabase.from('proposal_metadata').insert([{
+      // Store metadata off-chain. `custom_start` is optional — if the column
+      // hasn't been added to the table yet, fall back to inserting without it
+      // so submission never fails.
+      const baseRow: Record<string, any> = {
         proposal_id: proposalId.toString(),
         custom_deadline: deadline.toISOString(),
         submitter_wallet: address
-      }]);
+      };
+      const { error: insertError } = await supabase
+        .from('proposal_metadata')
+        .insert([{ ...baseRow, custom_start: start.toISOString() }]);
+      if (insertError) {
+        await supabase.from('proposal_metadata').insert([baseRow]);
+      }
 
       dismiss(toastId);
       toast(`Proposal #${proposalId} submitted!`, "success");
       setIsModalOpen(false);
-      setFormData({ 
-        title: '', description: '', category: 0, rationale: '', 
-        votingPeriod: '7', 
-        customDeadline: format(addDays(new Date(), 7), "yyyy-MM-dd'T'HH:mm") 
+      setFormData({
+        title: '', description: '', category: 0, rationale: '',
+        votingPeriod: '7',
+        customStart: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+        customDeadline: format(addDays(new Date(), 7), "yyyy-MM-dd'T'HH:mm")
       });
       fetchProposals();
     } catch (err: any) {
@@ -378,14 +413,10 @@ export default function Governance() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-widest text-gray-400">Voting Period</label>
-                  <select 
+                  <select
                     className="w-full px-5 h-14 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none transition-all font-bold appearance-none"
                     value={formData.votingPeriod}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      const newDeadline = val === 'custom' ? formData.customDeadline : format(addDays(new Date(), parseInt(val)), "yyyy-MM-dd'T'HH:mm");
-                      setFormData({...formData, votingPeriod: val, customDeadline: newDeadline});
-                    }}
+                    onChange={(e) => setFormData({ ...formData, votingPeriod: e.target.value })}
                   >
                     <option value="3">3 Days</option>
                     <option value="7">7 Days</option>
@@ -397,17 +428,57 @@ export default function Governance() {
               </div>
 
               {formData.votingPeriod === 'custom' && (
-                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-gray-400">Custom Deadline</label>
-                  <input 
-                    type="datetime-local"
-                    required
-                    className="w-full px-5 h-14 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none transition-all font-bold"
-                    value={formData.customDeadline}
-                    onChange={(e) => setFormData({...formData, customDeadline: e.target.value})}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-gray-400">Voting Starts</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      className="w-full px-5 h-14 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none transition-all font-bold"
+                      value={formData.customStart}
+                      onChange={(e) => setFormData({ ...formData, customStart: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-gray-400">Voting Ends</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      className="w-full px-5 h-14 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-[#1D9E75] outline-none transition-all font-bold"
+                      value={formData.customDeadline}
+                      onChange={(e) => setFormData({ ...formData, customDeadline: e.target.value })}
+                    />
+                  </div>
                 </div>
               )}
+
+              {/* Voting window summary — always shows the resulting start/end */}
+              <div className={`rounded-2xl border p-5 ${votingWindow.valid ? 'bg-[#1D9E75]/5 border-[#1D9E75]/20' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Voting Window</span>
+                  {votingWindow.valid ? (
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#1D9E75]">{votingWindow.days} day{votingWindow.days === 1 ? '' : 's'}</span>
+                  ) : (
+                    <span className="text-[10px] font-black uppercase tracking-widest text-red-500">End must be after start</span>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#1D9E75]" />
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">Opens</p>
+                      <p className="text-xs font-bold">{format(votingWindow.start, "MMM d, yyyy 'at' h:mm a")}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">Closes</p>
+                      <p className="text-xs font-bold">{votingWindow.valid ? format(votingWindow.end, "MMM d, yyyy 'at' h:mm a") : '—'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-widest text-gray-400">Description</label>

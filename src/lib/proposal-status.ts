@@ -10,20 +10,24 @@
 // States (matches ArcGovCore's quorum + majority rule):
 //   - Active   : voting is still open (isOpen AND deadline in the future)
 //   - Passed   : voting ended, quorum reached AND more FOR than AGAINST
-//   - Rejected : voting ended without passing AND ABSTAIN was the leading vote
-//   - Failed   : voting ended without passing for any other reason
-//                (neutral FOR=AGAINST tie, below quorum, or voted down)
+//   - Rejected : voting ended, quorum reached, but NOT in favour
+//                (AGAINST > FOR — i.e. voted down, including abstain-led results)
+//   - Failed   : voting ended without a decisive result
+//                (below quorum, or a neutral FOR = AGAINST tie)
 
-/** Minimum total votes for a proposal to be able to pass. Mirrors ArcGovCore.QUORUM. */
+/** Minimum total votes for a proposal to be able to pass / be decisively rejected. Mirrors ArcGovCore.QUORUM. */
 export const QUORUM = 5;
 
 export type ProposalStatus = 'Active' | 'Passed' | 'Failed' | 'Rejected';
 
-/** Minimal shape we need to derive status. Works with on-chain proposals and
- *  the metadata-merged variant (which adds `customDeadline`). */
+/** Minimal shape we need to derive status + voting window. Works with on-chain
+ *  proposals and the metadata-merged variant (which adds `customStart` /
+ *  `customDeadline`). */
 export interface ProposalLike {
   isOpen: boolean;
+  createdAt?: bigint | number;
   votingDeadline: bigint | number;
+  customStart?: Date | string | null;
   customDeadline?: Date | string | null;
   forVotes: bigint | number;
   againstVotes: bigint | number;
@@ -40,6 +44,18 @@ export function getEffectiveDeadline(p: ProposalLike): Date {
     return p.customDeadline instanceof Date ? p.customDeadline : new Date(p.customDeadline);
   }
   return new Date(Number(p.votingDeadline) * 1000);
+}
+
+/**
+ * When voting opened. Prefers an off-chain `customStart` override; otherwise
+ * falls back to the on-chain `createdAt` (unix-seconds submission time), which
+ * is the real moment voting became live.
+ */
+export function getVotingStart(p: ProposalLike): Date {
+  if (p.customStart) {
+    return p.customStart instanceof Date ? p.customStart : new Date(p.customStart);
+  }
+  return new Date(Number(p.createdAt ?? 0) * 1000);
 }
 
 /** True only while the proposal is genuinely accepting votes. */
@@ -61,22 +77,21 @@ export function didProposalPass(p: ProposalLike): boolean {
   return total >= QUORUM && forVotes > againstVotes;
 }
 
-/** True when ABSTAIN is the single largest bucket — the community engaged but
- *  declined to take a side. Used to label a non-passing proposal as "Rejected". */
-export function isAbstainLed(p: ProposalLike): boolean {
-  const forVotes = Number(p.forVotes);
-  const againstVotes = Number(p.againstVotes);
-  const abstainVotes = Number(p.abstainVotes);
-  return abstainVotes > forVotes && abstainVotes > againstVotes;
-}
-
 /**
- * The proposal's current state. 'Active' while voting; once voting ends it is
- * 'Passed' (quorum + majority), 'Rejected' (abstain led the vote), or 'Failed'
- * (neutral tie, below quorum, or voted down).
+ * The proposal's current state. 'Active' while voting; once voting ends:
+ *   - 'Passed'   : quorum reached AND FOR > AGAINST
+ *   - 'Rejected' : quorum reached but FOR did NOT win (voted down / abstain-led)
+ *   - 'Failed'   : below quorum, or a neutral FOR = AGAINST tie
  */
 export function getProposalStatus(p: ProposalLike, now: number = Date.now()): ProposalStatus {
   if (isVotingActive(p, now)) return 'Active';
   if (didProposalPass(p)) return 'Passed';
-  return isAbstainLed(p) ? 'Rejected' : 'Failed';
+
+  const forVotes = Number(p.forVotes);
+  const againstVotes = Number(p.againstVotes);
+  const total = forVotes + againstVotes + Number(p.abstainVotes);
+
+  if (total < QUORUM) return 'Failed';        // not enough participation to decide
+  if (forVotes === againstVotes) return 'Failed'; // neutral tie
+  return 'Rejected';                           // quorum met, FOR did not win
 }

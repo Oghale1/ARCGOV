@@ -3,6 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Clock, User, ChevronRight } from 'lucide-react';
 import ProposalStatusBadge from '@/components/shared/ProposalStatusBadge';
+import { getVotingStart, getEffectiveDeadline } from '@/lib/proposal-status';
 
 export interface Proposal {
   id: bigint | number;
@@ -10,8 +11,10 @@ export interface Proposal {
   title: string;
   description: string;
   category: number;
-  timestamp: bigint | number;
+  createdAt?: bigint | number;
+  timestamp?: bigint | number;
   votingDeadline: bigint | number;
+  customStart?: Date;
   customDeadline?: Date;
   forVotes: bigint | number;
   againstVotes: bigint | number;
@@ -42,6 +45,10 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
   const forPercent = totalVotes > 0 ? (forVotes / totalVotes) * 100 : 0;
   const againstPercent = totalVotes > 0 ? (againstVotes / totalVotes) * 100 : 0;
 
+  const votingStart = getVotingStart(proposal);
+  const votingEnd = getEffectiveDeadline(proposal);
+  const fmtDate = (d: Date) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
   return (
     <Link href={`/governance/${proposal.id}`}>
       <div className="p-8 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-[24px] hover:border-[#1D9E75] transition-all group relative overflow-hidden">
@@ -59,7 +66,7 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
             <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium h-4">
               <span className="flex items-center gap-1.5"><User size={14} /> Proposed by {proposal.proposer.slice(0, 6)}...{proposal.proposer.slice(-4)}</span>
               {hasMounted ? (
-                <span className="flex items-center gap-1.5"><Clock size={14} /> {new Date(Number(proposal.timestamp) * 1000).toLocaleDateString()}</span>
+                <span className="flex items-center gap-1.5"><Clock size={14} /> {fmtDate(votingStart)} – {fmtDate(votingEnd)}</span>
               ) : (
                 <span className="flex items-center gap-1.5 opacity-0"><Clock size={14} /> --/--/----</span>
               )}
