@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Clock, User, ChevronRight } from 'lucide-react';
-import CountdownTimer from '@/components/shared/CountdownTimer';
+import ProposalStatusBadge from '@/components/shared/ProposalStatusBadge';
 
 export interface Proposal {
   id: bigint | number;
@@ -41,8 +41,6 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
   
   const forPercent = totalVotes > 0 ? (forVotes / totalVotes) * 100 : 0;
   const againstPercent = totalVotes > 0 ? (againstVotes / totalVotes) * 100 : 0;
-  
-  const status = proposal.isOpen ? 'Active' : (forVotes > againstVotes ? 'Passed' : 'Failed');
 
   return (
     <Link href={`/governance/${proposal.id}`}>
@@ -68,24 +66,7 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
             </div>
           </div>
           
-          <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${
-            status === 'Active' ? 'bg-green-100 dark:bg-green-900/20' :
-            status === 'Passed' ? 'bg-blue-100 dark:bg-blue-900/20' :
-            'bg-red-100 dark:bg-red-900/20'
-          }`}>
-            {status === 'Active' ? (
-              <CountdownTimer deadline={proposal.customDeadline || new Date(Number(proposal.votingDeadline) * 1000)} />
-            ) : (
-              <>
-                <span className={`w-1.5 h-1.5 rounded-full ${
-                  status === 'Passed' ? 'bg-blue-500' : 'bg-red-500'
-                }`} />
-                <span className={status === 'Passed' ? 'text-blue-700 dark:text-blue-400' : 'text-red-700 dark:text-red-400'}>
-                  Voting {status}
-                </span>
-              </>
-            )}
-          </div>
+          <ProposalStatusBadge proposal={proposal} />
         </div>
 
         <div className="space-y-3">

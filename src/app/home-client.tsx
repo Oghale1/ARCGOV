@@ -26,12 +26,14 @@ const Cell = dynamic(() => import('recharts').then(mod => mod.Cell), { ssr: fals
 import validators from '@/data/validators.json';
 import { getAllProposals } from '@/lib/contract';
 import { getNetworkStats, NetworkStats } from '@/lib/arc-rpc';
+import { isVotingActive } from '@/lib/proposal-status';
+import supabase from '@/lib/supabase';
 
 // Components
 import StatCard from '@/components/shared/StatCard';
 import SkeletonLoader from '@/components/shared/SkeletonLoader';
 import QuantumBadge from '@/components/validators/QuantumBadge';
-import ActivityFeed from '@/components/shared/ActivityFeed';
+import RecentProposals from '@/components/shared/RecentProposals';
 import NetworkError from '@/components/shared/NetworkError';
 import VerifiedBadge from '@/components/shared/VerifiedBadge';
 import TestnetChip from '@/components/shared/TestnetChip';
@@ -41,6 +43,7 @@ export default function Home() {
   const [hasMounted, setHasMounted] = useState(false);
   const [networkStats, setNetworkStats] = useState<NetworkStats | null>(null);
   const [proposals, setProposals] = useState<any[]>([]);
+  const [metadata, setMetadata] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,12 +62,16 @@ export default function Home() {
     
     setError(null);
     try {
-      const [stats, allProposals] = await Promise.all([
+      const [stats, allProposals, meta] = await Promise.all([
         getNetworkStats(),
-        getAllProposals()
+        getAllProposals(),
+        // Off-chain deadline overrides — non-fatal: a Supabase hiccup must not
+        // blank out the proposals themselves.
+        supabase.from('proposal_metadata').select('*').then(r => r.data || [], () => [])
       ]);
       setNetworkStats(stats);
       setProposals((allProposals as any[]) || []);
+      setMetadata((meta as any[]) || []);
       setLastFetchedAt(new Date());
       setLastKnownBlock(stats.blockNumber);
       setFetchStatus('success');
@@ -121,13 +128,27 @@ export default function Home() {
     return { score: finalScore, color, hasProposals: proposals.length > 0 };
   }, [proposals]);
 
+  // Merge in off-chain custom deadlines so status/countdown match the rest of the app.
+  const proposalsWithMetadata = useMemo(() => {
+    return proposals.map(p => {
+      const m = metadata.find(meta => meta.proposal_id === p.id.toString());
+      return {
+        ...p,
+        customDeadline: m ? new Date(m.custom_deadline) : new Date(Number(p.votingDeadline) * 1000)
+      };
+    });
+  }, [proposals, metadata]);
+
+  // "Active" = voting genuinely open. A proposal whose deadline has passed is
+  // NOT active even if its on-chain `isOpen` flag is still true (it just hasn't
+  // been closed yet).
   const openProposals = useMemo(() => {
-    return proposals.filter(p => p.isOpen);
-  }, [proposals]);
+    return proposalsWithMetadata.filter(p => isVotingActive(p));
+  }, [proposalsWithMetadata]);
 
   const recentProposals = useMemo(() => {
-    // Return max 3 most recent open proposals
-    return [...openProposals].reverse().slice(0, 3);
+    // The 3 most recent *currently active* proposals to feature.
+    return [...openProposals].sort((a, b) => Number(b.id) - Number(a.id)).slice(0, 3);
   }, [openProposals]);
 
   // Chart Data using calculated score
@@ -359,7 +380,7 @@ export default function Home() {
                  <span className="text-[10px] font-black text-[#1D9E75] uppercase tracking-widest">Live Feed</span>
               </div>
            </div>
-           <ActivityFeed maxItems={5} />
+           <RecentProposals proposals={proposalsWithMetadata} isLoading={isLoading} />
         </section>
 
         {/* VERIFIED BADGE */}

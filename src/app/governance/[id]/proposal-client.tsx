@@ -39,6 +39,7 @@ import {
   getProposalCount
 } from '@/lib/contract';
 import { getBlockNumberFormatted } from '@/lib/arc-rpc';
+import { isVotingActive } from '@/lib/proposal-status';
 import { useToast } from '@/components/shared/Toast';
 import supabase from '@/lib/supabase';
 
@@ -48,7 +49,7 @@ import NetworkError from '@/components/shared/NetworkError';
 import SkeletonLoader from '@/components/shared/SkeletonLoader';
 import VerifiedBadge from '@/components/shared/VerifiedBadge';
 import TestnetChip from '@/components/shared/TestnetChip';
-import CountdownTimer from '@/components/shared/CountdownTimer';
+import ProposalStatusBadge from '@/components/shared/ProposalStatusBadge';
 
 const CATEGORY_LABELS = ['VALIDATOR', 'PARAMETER', 'UPGRADE', 'ECOSYSTEM'];
 const CATEGORY_COLORS: any = {
@@ -204,6 +205,12 @@ export default function ProposalClient() {
   const againstPercent = totalVotes > 0 ? (Number(proposal.againstVotes) / totalVotes) * 100 : 0;
   const abstainPercent = totalVotes > 0 ? (Number(proposal.abstainVotes) / totalVotes) * 100 : 0;
 
+  // Proposal merged with its off-chain custom deadline, for status + countdown.
+  const proposalView = proposal ? { ...proposal, customDeadline } : null;
+  // Voting is only genuinely open while the deadline is in the future — the
+  // on-chain `isOpen` flag alone can lag behind (it's cleared only on close).
+  const votingActive = proposalView ? isVotingActive(proposalView) : false;
+
   if (error) {
     return (
       <div className="flex flex-col min-h-screen bg-white dark:bg-[#0F1117]">
@@ -244,16 +251,7 @@ export default function ProposalClient() {
                 <span className={`px-2.5 py-1 rounded text-[10px] font-black tracking-wider ${CATEGORY_COLORS[proposal.category] || CATEGORY_COLORS[3]} uppercase`}>
                   {CATEGORY_LABELS[proposal.category] || 'ECOSYSTEM'}
                 </span>
-                <div className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${proposal.isOpen ? 'bg-green-50 text-green-700 dark:bg-green-900/10' : 'bg-blue-50 text-blue-700 dark:bg-blue-900/10'}`}>
-                  {proposal.isOpen && customDeadline ? (
-                    <CountdownTimer deadline={customDeadline} />
-                  ) : (
-                    <>
-                      <span className={`w-1.5 h-1.5 rounded-full ${proposal.isOpen ? 'bg-green-500 animate-pulse' : 'bg-blue-500'}`} />
-                      {proposal.isOpen ? 'Voting Active' : 'Voting Closed'}
-                    </>
-                  )}
-                </div>
+                {proposalView && <ProposalStatusBadge proposal={proposalView} />}
                 <span className="text-xs text-gray-500 flex items-center gap-1.5">
                   <User size={14} /> Proposed by {proposal.proposer.slice(0, 6)}...{proposal.proposer.slice(-4)}
                 </span>
@@ -377,7 +375,7 @@ export default function ProposalClient() {
                     </div>
                   </div>
 
-                  {proposal.isOpen && (
+                  {votingActive && (
                     <div className="pt-4 space-y-4">
                       {userVoteStatus ? (
                          <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl flex items-center gap-3 text-green-600">

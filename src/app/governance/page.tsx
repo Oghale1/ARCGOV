@@ -19,6 +19,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { getAllProposals, submitProposal } from '@/lib/contract';
+import { getProposalStatus } from '@/lib/proposal-status';
 import { getBlockNumberFormatted } from '@/lib/arc-rpc';
 import { useAccount, useWalletClient, usePublicClient, useChainId } from 'wagmi';
 import { useToast } from '@/components/shared/Toast';
@@ -101,25 +102,26 @@ export default function Governance() {
     });
   }, [proposals, metadata]);
 
-  // Stats
+  // Stats — derived from the proposal's *current* state (deadline-aware), so a
+  // proposal whose voting window has lapsed no longer counts as "Active".
   const stats = useMemo(() => {
-    const total = proposals.length;
-    const active = proposals.filter(p => p.isOpen).length;
-    const passed = proposals.filter(p => !p.isOpen && Number(p.forVotes) > Number(p.againstVotes)).length;
-    const failed = proposals.filter(p => !p.isOpen && Number(p.forVotes) <= Number(p.againstVotes)).length;
-    return { total, active, passed, failed };
-  }, [proposals]);
+    const total = proposalsWithMetadata.length;
+    let active = 0, passed = 0, failed = 0, rejected = 0;
+    for (const p of proposalsWithMetadata) {
+      const s = getProposalStatus(p);
+      if (s === 'Active') active++;
+      else if (s === 'Passed') passed++;
+      else if (s === 'Rejected') rejected++;
+      else failed++;
+    }
+    return { total, active, passed, failed, rejected };
+  }, [proposalsWithMetadata]);
 
   // Filtered Proposals
   const filteredProposals = useMemo(() => {
     return proposalsWithMetadata.filter(p => {
       const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase());
-      const matchesTab = 
-        filterTab === 'All' || 
-        (filterTab === 'Active' && p.isOpen) || 
-        (filterTab === 'Passed' && !p.isOpen && Number(p.forVotes) > Number(p.againstVotes)) ||
-        (filterTab === 'Failed' && !p.isOpen && Number(p.forVotes) <= Number(p.againstVotes)) ||
-        (filterTab === 'Pending' && p.isOpen);
+      const matchesTab = filterTab === 'All' || getProposalStatus(p) === filterTab;
       return matchesSearch && matchesTab;
     }).sort((a, b) => Number(b.id) - Number(a.id));
   }, [proposalsWithMetadata, search, filterTab]);
@@ -223,12 +225,13 @@ export default function Governance() {
         </div>
 
         {/* SECTION 2 — STATS ROW */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
           {[
             { label: 'Total Proposals', value: stats.total },
             { label: 'Active Now', value: stats.active, color: 'text-[#1D9E75]' },
             { label: 'Passed', value: stats.passed, color: 'text-blue-500' },
             { label: 'Failed', value: stats.failed, color: 'text-red-500' },
+            { label: 'Rejected', value: stats.rejected, color: 'text-amber-500' },
           ].map((s) => (
             <div key={s.label} className="p-6 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-3xl">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
@@ -253,7 +256,7 @@ export default function Governance() {
         {/* SECTION 3 — FILTERS + SEARCH */}
         <div className="flex flex-col lg:flex-row gap-6 mb-8">
           <div className="flex bg-gray-50 dark:bg-gray-900/50 p-1 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-x-auto no-scrollbar shrink-0">
-            {['All', 'Active', 'Passed', 'Failed', 'Pending'].map((tab) => (
+            {['All', 'Active', 'Passed', 'Failed', 'Rejected'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setFilterTab(tab)}
