@@ -22,11 +22,13 @@ export async function POST(request: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+    // gemini-1.5-flash was retired by Google in 2025 — newer API keys get a 404
+    // "model not found" on it. Use a current, GA flash model instead.
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
     });
 
-    const systemInstruction = `You are "Gemini Arc", a governance analyst for the Arc blockchain. 
+    const systemInstruction = `You are "Gemini Arc", a governance analyst for the Arc blockchain.
     Your goal is to help users understand governance proposals. 
     Be neutral, factual, and concise. 
     The current proposal is titled: "${proposalTitle}".

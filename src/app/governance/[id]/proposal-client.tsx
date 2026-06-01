@@ -193,14 +193,30 @@ export default function ProposalClient() {
         }),
       });
 
-      if (!response.ok) throw new Error('Assistant failed to respond');
       const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || 'Assistant failed to respond');
       setMessages(prev => [...prev, { role: 'assistant', content: data.text }]);
-    } catch (err) {
-      toast("AI Assistant failed", "error");
+    } catch (err: any) {
+      const detail = err?.message || 'AI Assistant failed';
+      toast(detail, "error");
+      // Surface the reason in the thread so it's debuggable, not just a toast.
+      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ ${detail}` }]);
     } finally {
       setIsSummarizing(false);
     }
+  };
+
+  const handleShare = () => {
+    if (!proposal) return;
+    const url = typeof window !== 'undefined'
+      ? window.location.href
+      : `https://arcgov.vercel.app/governance/${id}`;
+    const lead = votingActive
+      ? `is live for voting on Arc Testnet governance — cast your vote`
+      : `on Arc Testnet governance — take a look`;
+    const text = `📜 ${proposal.title}\n\nProposal #${id} ${lead} 👇`;
+    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}&hashtags=ArcGov,Arc,Governance`;
+    window.open(intent, '_blank', 'noopener,noreferrer');
   };
 
   const totalVotes = proposal ? Number(proposal.forVotes) + Number(proposal.againstVotes) + Number(proposal.abstainVotes) : 0;
@@ -296,7 +312,7 @@ export default function ProposalClient() {
                         </div>
                         <div className="text-left">
                            <span className="block text-sm font-black uppercase tracking-widest">ArcGov AI Assistant</span>
-                           <span className="block text-[10px] font-bold text-gray-400">Powered by Gemini 1.5 Flash</span>
+                           <span className="block text-[10px] font-bold text-gray-400">Powered by Gemini 2.0 Flash</span>
                         </div>
                       </div>
                       {isSummaryExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -428,7 +444,10 @@ export default function ProposalClient() {
                       <p className="text-xs text-gray-400 leading-relaxed">
                          Help shape the network by inviting other community members to vote on this proposal.
                       </p>
-                      <button className="w-full py-4 bg-white/10 hover:bg-white/20 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 h-14">
+                      <button
+                         onClick={handleShare}
+                         className="w-full py-4 bg-white/10 hover:bg-white/20 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 h-14"
+                      >
                          <Share2 size={18} /> SHARE ON X
                       </button>
                    </div>

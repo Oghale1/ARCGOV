@@ -203,7 +203,19 @@ export default function Governance() {
         .from('proposal_metadata')
         .insert([{ ...baseRow, custom_start: start.toISOString() }]);
       if (insertError) {
-        await supabase.from('proposal_metadata').insert([baseRow]);
+        const { error: fallbackError } = await supabase
+          .from('proposal_metadata')
+          .insert([baseRow]);
+        // If BOTH inserts fail, the custom voting window was NOT persisted, so
+        // the proposal will fall back to the contract's hard-coded 7-day
+        // deadline on every read. Surface it instead of failing silently.
+        if (fallbackError) {
+          console.error('proposal_metadata insert failed:', insertError, fallbackError);
+          toast(
+            "Proposal submitted on-chain, but the custom voting window couldn't be saved (defaults to 7 days). Run the proposal_metadata SQL migration.",
+            "error"
+          );
+        }
       }
 
       dismiss(toastId);
