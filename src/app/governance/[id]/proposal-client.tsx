@@ -312,7 +312,7 @@ export default function ProposalClient() {
                         </div>
                         <div className="text-left">
                            <span className="block text-sm font-black uppercase tracking-widest">ArcGov AI Assistant</span>
-                           <span className="block text-[10px] font-bold text-gray-400">Powered by Gemini 2.0 Flash</span>
+                           <span className="block text-[10px] font-bold text-gray-400">Powered by Llama 3.3 · Groq</span>
                         </div>
                       </div>
                       {isSummaryExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}

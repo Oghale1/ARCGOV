@@ -405,7 +405,7 @@ Vote NO to reject this proposal.`;
                     </div>
                     <div className="text-left">
                        <span className="block text-sm font-black uppercase tracking-widest">AI Summary</span>
-                       <span className="block text-[10px] font-bold text-gray-400">Powered by Gemini 1.5 Flash</span>
+                       <span className="block text-[10px] font-bold text-gray-400">Powered by Llama 3.3 · Groq</span>
                     </div>
                   </div>
                   {isSummaryExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
