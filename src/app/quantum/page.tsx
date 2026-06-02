@@ -76,15 +76,16 @@ export default function QuantumReadiness() {
         setSubmissionId(refId);
         toast("Subscribed to quantum updates", "success");
 
-        // Send confirmation email
-        await fetch('/api/notify', {
+        // Send confirmation email — fire-and-forget, never block the UI.
+        fetch('/api/notify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            type: 'quantum_confirmation',
-            email: email
+            type: 'quantum_update',
+            to: email,
+            data: { updateText: 'Thanks for subscribing — you will receive Arc quantum readiness updates as validators complete their post-quantum upgrades.' }
           }),
-        });
+        }).catch(console.error);
       }
     } catch (err) {
       console.error(err);

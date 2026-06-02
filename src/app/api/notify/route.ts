@@ -1,96 +1,62 @@
-import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
+import {
+  sendEmail,
+  stakingWaitlistEmail,
+  newProposalEmail,
+  quantumUpdateEmail,
+} from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: Request) {
+// Normalise legacy type names so older callers keep working.
+const TYPE_ALIASES: Record<string, string> = {
+  waitlist_confirmation: 'staking_waitlist',
+  staking_live: 'staking_waitlist',
+  quantum_confirmation: 'quantum_update',
+};
+
+export async function POST(request: Request) {
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
-    const FROM_EMAIL = process.env.NOTIFICATION_FROM_EMAIL || 'noreply@arcgov.vercel.app';
+    const body = await request.json();
+    // Accept either `to` (new) or `email` (legacy) for the recipient.
+    const to = body.to || body.email;
+    const data = body.data;
+    const type = TYPE_ALIASES[body.type] || body.type;
 
-    const { type, email, data } = await req.json();
-
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    if (!type || !to) {
+      return NextResponse.json({ error: 'Missing type or to' }, { status: 400 });
     }
 
     let subject = '';
     let html = '';
 
     switch (type) {
-      case 'staking_live':
-        subject = 'tARC Staking is now live on ArcGov';
-        html = `
-          <div style="font-family: sans-serif; line-height: 1.6; color: #111;">
-            <h2>ArcGov staking is now live!</h2>
-            <p>You are on the waitlist and can now stake tARC tokens at <a href="https://arcgov.vercel.app/staking">arcgov.vercel.app/staking</a></p>
-            <p>This was triggered by the passing of AIP-001 governance proposal.</p>
-            <hr />
-            <p><a href="https://arcgov.vercel.app">Visit ArcGov →</a></p>
-            <p style="font-size: 12px; color: #666;">ArcGov · Built on Arc Testnet · Not affiliated with Circle</p>
-          </div>
-        `;
+      case 'staking_waitlist':
+        subject = 'You are on the ArcGov staking waitlist';
+        html = stakingWaitlistEmail(data?.validatorName);
         break;
-
       case 'new_proposal':
-        subject = 'New governance proposal on ArcGov';
-        html = `
-          <div style="font-family: sans-serif; line-height: 1.6; color: #111;">
-            <h2>A new proposal has been submitted</h2>
-            <p><strong>${data?.title || 'Untitled Proposal'}</strong></p>
-            <p>Vote now at <a href="https://arcgov.vercel.app/governance">arcgov.vercel.app/governance</a></p>
-            <hr />
-            <p style="font-size: 12px; color: #666;">ArcGov · Built on Arc Testnet</p>
-          </div>
-        `;
+        subject = `New proposal: ${data?.title ?? 'on ArcGov'}`;
+        html = newProposalEmail(data?.title ?? 'New Proposal', data?.proposalId ?? '');
         break;
-
-      case 'waitlist_confirmation':
-        subject = "You're on the ArcGov staking waitlist";
-        html = `
-          <div style="font-family: sans-serif; line-height: 1.6; color: #111;">
-            <h2>Waitlist Confirmed</h2>
-            <p>You'll be notified when tARC staking goes live on ArcGov after AIP-001 governance proposal passes.</p>
-            <p>Track the proposal at: <a href="https://arcgov.vercel.app/governance/aip-001">arcgov.vercel.app/governance/aip-001</a></p>
-            <hr />
-            <p style="font-size: 12px; color: #666;">ArcGov · Built on Arc Testnet</p>
-          </div>
-        `;
+      case 'quantum_update':
+        subject = 'Arc quantum readiness update from ArcGov';
+        html = quantumUpdateEmail(
+          data?.updateText ?? 'A validator has completed a quantum upgrade milestone.'
+        );
         break;
-
-      case 'quantum_confirmation':
-        subject = "Subscribed to ArcGov Quantum Updates";
-        html = `
-          <div style="font-family: sans-serif; line-height: 1.6; color: #111;">
-            <h2>Subscription Confirmed</h2>
-            <p>You've successfully subscribed to quantum readiness updates on ArcGov.</p>
-            <p>We'll notify you as more institutional validators complete their post-quantum upgrades.</p>
-            <p>View current status: <a href="https://arcgov.vercel.app/quantum">arcgov.vercel.app/quantum</a></p>
-            <hr />
-            <p style="font-size: 12px; color: #666;">ArcGov · Built on Arc Testnet</p>
-          </div>
-        `;
-        break;
-
       default:
-        return NextResponse.json({ error: 'Invalid notification type' }, { status: 400 });
+        return NextResponse.json({ error: 'Unknown type' }, { status: 400 });
     }
 
-    const { data: resendData, error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: email,
-      subject: subject,
-      html: html,
+    const success = await sendEmail({ to, subject, html });
+
+    return NextResponse.json({
+      success,
+      message: success ? 'Email sent' : 'Email failed — check server logs / credentials',
     });
-
-    if (error) {
-      console.error('Resend error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, id: resendData?.id });
-  } catch (err: any) {
-    console.error('Notify route error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (error) {
+    console.error('Notify route error:', error);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

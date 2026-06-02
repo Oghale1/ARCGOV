@@ -34,6 +34,7 @@ export default function ValidatorsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
   // Live Data State
   const [blockNumber, setBlockNumber] = useState<string | null>(null);
@@ -140,6 +141,7 @@ export default function ValidatorsPage() {
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setApplyError(null);
     try {
       const { data, error } = await supabase
         .from('validator_applications')
@@ -150,9 +152,13 @@ export default function ValidatorsPage() {
       if (data) {
         setSubmissionId(data[0].id.toString().slice(0, 8));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to submit application.");
+      setApplyError(
+        err?.message?.includes('relation') || err?.code === '42P01'
+          ? "Applications aren't set up yet — the validator_applications table is missing. Run the SQL migration."
+          : (err?.message || "Failed to submit application. Please try again.")
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -507,10 +513,16 @@ export default function ValidatorsPage() {
                   />
                 </div>
 
+                {applyError && (
+                  <p className="text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl px-4 py-3">
+                    {applyError}
+                  </p>
+                )}
+
                 <div className="pt-4 flex gap-4">
-                  <button 
+                  <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={() => { setIsModalOpen(false); setApplyError(null); }}
                     className="flex-1 h-14 border-2 border-gray-100 dark:border-gray-800 font-black rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all uppercase tracking-widest text-xs"
                   >
                     Cancel
