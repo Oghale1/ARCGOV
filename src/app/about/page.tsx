@@ -2,16 +2,15 @@
 // ArcGov — Built by Gemini — arcgov.vercel.app
 
 import React, { useState } from 'react';
-import { 
-  Info, 
-  HelpCircle, 
-  Github, 
-  MessageSquare, 
-  ChevronDown, 
-  ChevronUp, 
-  ExternalLink, 
-  Mail, 
-  User, 
+import {
+  Info,
+  HelpCircle,
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Mail,
+  User,
   Send,
   Loader2,
   CheckCircle2,
@@ -105,7 +104,7 @@ export default function AboutPage() {
               long-term health of the Arc ecosystem. We provide the tools for builders and users to track network health and shape its future.
             </p>
             <p>
-              ArcGov is fully open source, non-commercial, and entirely independent. We are not affiliated with, 
+              ArcGov is independent and non-commercial. We are not affiliated with,
               sponsored by, or endorsed by Circle Internet Financial Ltd.
             </p>
           </div>
@@ -143,27 +142,6 @@ export default function AboutPage() {
               Learn more at arc.network <ExternalLink size={16} />
             </a>
           </div>
-        </section>
-
-        {/* SECTION 3 — OPEN SOURCE */}
-        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-           <div className="p-12 bg-[#0F1117] text-white rounded-[48px] shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#1D9E75] rounded-full blur-[100px] -mr-32 -mt-32 opacity-20" />
-              <div className="relative z-10 space-y-6">
-                 <h2 className="text-3xl font-black">ArcGov is fully open source</h2>
-                 <p className="text-gray-400 max-w-sm mx-auto">
-                    MIT Licence — fork it, build on it, contribute to the future of governance.
-                 </p>
-                 <a 
-                  href="https://github.com/arcgov" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-black rounded-2xl hover:bg-gray-100 transition-all"
-                 >
-                   <Github size={20} /> VIEW ON GITHUB
-                 </a>
-              </div>
-           </div>
         </section>
 
         {/* SECTION 4 — FAQ */}

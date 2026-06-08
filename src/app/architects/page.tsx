@@ -1,15 +1,14 @@
 'use client';
 // ArcGov — Built by Gemini — arcgov.vercel.app
 
-import React, { useState } from 'react';
-import { 
-  Hammer, 
-  Github, 
-  Twitter, 
-  Trophy, 
-  ExternalLink, 
-  Code2, 
-  UserPlus, 
+import React, { useState, useEffect } from 'react';
+import {
+  Hammer,
+  Twitter,
+  Trophy,
+  ExternalLink,
+  Code2,
+  UserPlus,
   ArrowUpRight,
   Loader2,
   CheckCircle2,
@@ -33,16 +32,48 @@ export default function Architects() {
   const [formData, setFormData] = useState({
     name: '',
     xHandle: '',
-    githubUrl: '',
     appLink: '',
     description: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
 
+  // Community submissions (from the form) shown alongside the static featured list.
+  const [submittedProjects, setSubmittedProjects] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/architects')
+      .then((r) => r.json())
+      .then((d) => setSubmittedProjects(Array.isArray(d.projects) ? d.projects : []))
+      .catch(() => setSubmittedProjects([]));
+  }, []);
+
+  // Static featured builders + community submissions, normalized into one shape
+  // so they render in the same card grid.
+  const featuredProjects = [
+    ...architects.map((a) => ({
+      key: `static-${a.id}`,
+      title: a.projectName,
+      category: a.category,
+      description: a.projectDescription,
+      builder: a.name,
+      xHandle: a.xHandle,
+      appLink: a.appLink,
+    })),
+    ...submittedProjects.map((s) => ({
+      key: `db-${s.id}`,
+      title: s.name,
+      category: 'Community',
+      description: s.description,
+      builder: s.name,
+      xHandle: s.x_handle,
+      appLink: s.app_link,
+    })),
+  ];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.xHandle || !formData.githubUrl || !formData.description) {
+    if (!formData.name || !formData.xHandle || !formData.description) {
       toast("Please fill in all required fields", "error");
       return;
     }
@@ -57,13 +88,17 @@ export default function Architects() {
     const { ok, ref, error } = await submitForm('architect_application', {
       name: formData.name,
       x_handle: formattedXHandle,
-      github_url: formData.githubUrl,
       app_link: formData.appLink,
       description: formData.description,
     });
     if (ok) {
       setSubmissionId(ref || 'SUCCESS');
       toast("Application submitted successfully!", "success");
+      // Optimistically show it in the list right away.
+      setSubmittedProjects((prev) => [
+        { id: ref || `local-${Date.now()}`, name: formData.name, x_handle: formattedXHandle, app_link: formData.appLink, description: formData.description },
+        ...prev,
+      ]);
     } else {
       toast(error || "Submission failed. Please try again.", "error");
     }
@@ -135,48 +170,42 @@ export default function Architects() {
         {/* SECTION 3 — FEATURED BUILDS */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
            <h2 className="text-3xl font-black mb-10 text-center">Featured Arc Builders</h2>
-           {architects.length > 0 ? (
+           {featuredProjects.length > 0 ? (
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {architects.map((arc) => (
-                  <div key={arc.id} className="p-8 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-[32px] hover:border-[#1D9E75] transition-all group flex flex-col h-full shadow-sm">
+                {featuredProjects.map((arc) => (
+                  <div key={arc.key} className="p-8 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-[32px] hover:border-[#1D9E75] transition-all group flex flex-col h-full shadow-sm">
                      <div className="flex justify-between items-start mb-6">
                         <div className="space-y-1">
                           <span className="px-2 py-0.5 rounded bg-[#1D9E75]/10 text-[#1D9E75] text-[9px] font-black uppercase tracking-widest">
                             {arc.category}
                           </span>
-                          <h3 className="text-xl font-black group-hover:text-[#1D9E75] transition-colors">{arc.projectName}</h3>
+                          <h3 className="text-xl font-black group-hover:text-[#1D9E75] transition-colors">{arc.title}</h3>
                         </div>
                         <div className="flex items-center gap-2">
-                          <a href={`https://twitter.com/${arc.xHandle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#1DA1F2] transition-colors">
-                            <Twitter size={20} />
-                          </a>
+                          {arc.xHandle && (
+                            <a href={`https://twitter.com/${arc.xHandle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#1DA1F2] transition-colors">
+                              <Twitter size={20} />
+                            </a>
+                          )}
                         </div>
                      </div>
                      <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-8 flex-grow italic">
-                       &quot;{arc.projectDescription}&quot;
+                       &quot;{arc.description}&quot;
                      </p>
                      <div className="flex flex-col gap-4 mt-auto pt-6 border-t border-gray-50 dark:border-gray-900">
                         <div className="flex items-center justify-between">
-                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">By {arc.name}</span>
+                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">By {arc.builder}</span>
                            <div className="flex items-center gap-2">
                              {arc.appLink && (
-                               <a 
-                                 href={arc.appLink} 
-                                 target="_blank" 
+                               <a
+                                 href={arc.appLink}
+                                 target="_blank"
                                  rel="noopener noreferrer"
                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1D9E75]/10 text-[#1D9E75] rounded-lg text-[10px] font-black uppercase hover:bg-[#1D9E75] hover:text-white transition-all"
                                >
                                  <Globe size={12} /> Visit App
                                </a>
                              )}
-                             <a 
-                               href={arc.githubUrl} 
-                               target="_blank" 
-                               rel="noopener noreferrer"
-                               className="p-2 bg-gray-50 dark:bg-gray-900 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-[#0F1117] hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
-                             >
-                               <Github size={16} />
-                             </a>
                            </div>
                         </div>
                      </div>
@@ -221,7 +250,6 @@ export default function Architects() {
                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Projects</th>
                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Proposals</th>
                            <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Votes</th>
-                           <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">GitHub</th>
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
@@ -237,11 +265,6 @@ export default function Architects() {
                              <td className="px-8 py-6 text-center font-bold">{arc.projectsBuilt}</td>
                              <td className="px-8 py-6 text-center font-bold">{arc.proposalsSubmitted}</td>
                              <td className="px-8 py-6 text-center font-bold">{arc.votesCast}</td>
-                             <td className="px-8 py-6 text-right">
-                                <a href={arc.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-block p-2 text-gray-400 hover:text-[#1D9E75] transition-colors">
-                                   <Github size={18} />
-                                </a>
-                             </td>
                           </tr>
                         ))}
                      </tbody>
@@ -260,9 +283,6 @@ export default function Architects() {
                                 <span className="font-mono text-[10px] text-gray-500">{arc.walletAddress.slice(0, 6)}...</span>
                              </div>
                           </div>
-                          <a href={arc.githubUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-50 dark:bg-gray-900 rounded-xl text-gray-400">
-                             <Github size={16} />
-                          </a>
                        </div>
                        <div className="grid grid-cols-3 gap-2">
                           {[
@@ -342,28 +362,15 @@ export default function Architects() {
                       </div>
                    </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-gray-400">GitHub Profile/Repo</label>
-                        <input 
-                          type="url" 
-                          required 
-                          placeholder="https://github.com/..."
-                          className="w-full px-5 h-12 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-[#1D9E75] transition-all text-sm font-medium"
-                          value={formData.githubUrl}
-                          onChange={(e) => setFormData({...formData, githubUrl: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-gray-400">Live App URL (optional)</label>
-                        <input 
-                          type="url" 
-                          placeholder="https://yourapp.vercel.app"
-                          className="w-full px-5 h-12 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-[#1D9E75] transition-all text-sm font-medium"
-                          value={formData.appLink}
-                          onChange={(e) => setFormData({...formData, appLink: e.target.value})}
-                        />
-                      </div>
+                   <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-gray-400">Live App URL (optional)</label>
+                      <input
+                        type="url"
+                        placeholder="https://yourapp.vercel.app"
+                        className="w-full px-5 h-12 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-[#1D9E75] transition-all text-sm font-medium"
+                        value={formData.appLink}
+                        onChange={(e) => setFormData({...formData, appLink: e.target.value})}
+                      />
                    </div>
 
                    <div className="space-y-2">
