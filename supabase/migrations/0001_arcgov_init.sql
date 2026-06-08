@@ -38,6 +38,13 @@ ALTER TABLE validator_applications ADD COLUMN IF NOT EXISTS message             
 ALTER TABLE validator_applications ADD COLUMN IF NOT EXISTS infrastructure_description text;
 ALTER TABLE validator_applications ADD COLUMN IF NOT EXISTS quantum_status             text;
 ALTER TABLE validator_applications ADD COLUMN IF NOT EXISTS status                     text DEFAULT 'pending';
+-- Remove stale columns from the original schema whose names don't match the
+-- form fields. The old `contact_email` was NOT NULL, so leaving it in place
+-- blocks every insert ("null value in column contact_email violates not-null
+-- constraint") because the app sends `email`, not `contact_email`.
+ALTER TABLE validator_applications DROP COLUMN IF EXISTS contact_email;
+ALTER TABLE validator_applications DROP COLUMN IF EXISTS blockchain_experience;
+ALTER TABLE validator_applications DROP COLUMN IF EXISTS message_to_arc;
 
 -- ---------------------------------------------------------------------------
 -- 2. staking_waitlist  ← validators/[id] + staking page ("Notify me")
@@ -81,6 +88,9 @@ CREATE TABLE IF NOT EXISTS architect_applications (
 );
 ALTER TABLE architect_applications ADD COLUMN IF NOT EXISTS app_link    text;
 ALTER TABLE architect_applications ADD COLUMN IF NOT EXISTS description text;
+-- Old schema used `building_description NOT NULL`; the form sends `description`.
+-- Same class of bug as validator_applications.contact_email — drop the stale one.
+ALTER TABLE architect_applications DROP COLUMN IF EXISTS building_description;
 
 -- ---------------------------------------------------------------------------
 -- 4. feedback  ← src/app/about/page.tsx
