@@ -24,7 +24,7 @@ import {
 // Data & Libs
 import validators from '@/data/validators.json';
 import { getAllProposals } from '@/lib/contract';
-import supabase from '@/lib/supabase';
+import { submitForm } from '@/lib/submit';
 import { useToast } from '@/components/shared/Toast';
 
 // Components
@@ -104,20 +104,13 @@ export default function Staking() {
     if (!validatorEmail) return;
 
     setIsSubmittingValidator(true);
-    try {
-      const { data, error } = await supabase
-        .from('staking_waitlist')
-        .insert([{ 
-          email: validatorEmail, 
-          validator_id: validatorId,
-          wallet_address: address || null
-        }])
-        .select();
-
-      if (error) throw error;
-      
-      const refId = data?.[0]?.id?.toString().slice(0, 8) || 'SUCCESS';
-      setValidatorSubmissionRef(refId);
+    const { ok, ref, error } = await submitForm('staking_waitlist', {
+      email: validatorEmail,
+      validator_id: validatorId,
+      wallet_address: address || null,
+    });
+    if (ok) {
+      setValidatorSubmissionRef(ref || 'SUCCESS');
       toast("Added to validator waitlist!", "success");
 
       // Send confirmation email — fire-and-forget, never block the UI.
@@ -129,12 +122,10 @@ export default function Staking() {
           to: validatorEmail
         }),
       }).catch(console.error);
-    } catch (err) {
-      console.error(err);
-      toast("Submission failed.", "error");
-    } finally {
-      setIsSubmittingValidator(false);
+    } else {
+      toast(error || "Submission failed.", "error");
     }
+    setIsSubmittingValidator(false);
   };
 
   const handleGeneralWaitlist = async (e: React.FormEvent) => {
@@ -142,19 +133,12 @@ export default function Staking() {
     if (!generalEmail) return;
 
     setIsSubmittingGeneral(true);
-    try {
-      const { data, error } = await supabase
-        .from('staking_waitlist')
-        .insert([{ 
-          email: generalEmail, 
-          wallet_address: address || null
-        }])
-        .select();
-
-      if (error) throw error;
-
-      const refId = data?.[0]?.id?.toString().slice(0, 8) || 'SUCCESS';
-      setGeneralSubmissionRef(refId);
+    const { ok, ref, error } = await submitForm('staking_waitlist', {
+      email: generalEmail,
+      wallet_address: address || null,
+    });
+    if (ok) {
+      setGeneralSubmissionRef(ref || 'SUCCESS');
       toast("You are on the waitlist!", "success");
 
       // Send confirmation email — fire-and-forget, never block the UI.
@@ -166,12 +150,10 @@ export default function Staking() {
           to: generalEmail
         }),
       }).catch(console.error);
-    } catch (err) {
-      console.error(err);
-      toast("Submission failed.", "error");
-    } finally {
-      setIsSubmittingGeneral(false);
+    } else {
+      toast(error || "Submission failed.", "error");
     }
+    setIsSubmittingGeneral(false);
   };
 
   return (

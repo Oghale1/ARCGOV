@@ -26,7 +26,7 @@ const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.Res
 
 // Data & Libs
 import validators from '@/data/validators.json';
-import supabase from '@/lib/supabase';
+import { submitForm } from '@/lib/submit';
 import { useToast } from '@/components/shared/Toast';
 
 export default function QuantumReadiness() {
@@ -59,40 +59,27 @@ export default function QuantumReadiness() {
     if (!email) return;
 
     setIsSubmitting(true);
-    try {
-      const { data, error } = await supabase
-        .from('quantum_subscribers')
-        .insert([{ email }])
-        .select();
+    const { ok, ref, error, code } = await submitForm('quantum_subscriber', { email });
+    if (ok) {
+      setSubmissionId(ref || 'SUCCESS');
+      toast("Subscribed to quantum updates", "success");
 
-      if (error) {
-        if (error.code === '23505') {
-          toast("You are already subscribed!", "info");
-        } else {
-          throw error;
-        }
-      } else {
-        const refId = data?.[0]?.id?.toString().slice(0, 8) || 'SUCCESS';
-        setSubmissionId(refId);
-        toast("Subscribed to quantum updates", "success");
-
-        // Send confirmation email — fire-and-forget, never block the UI.
-        fetch('/api/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'quantum_update',
-            to: email,
-            data: { updateText: 'Thanks for subscribing — you will receive Arc quantum readiness updates as validators complete their post-quantum upgrades.' }
-          }),
-        }).catch(console.error);
-      }
-    } catch (err) {
-      console.error(err);
-      toast("Subscription failed. Ensure 'quantum_subscribers' table exists.", "error");
-    } finally {
-      setIsSubmitting(false);
+      // Send confirmation email — fire-and-forget, never block the UI.
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'quantum_update',
+          to: email,
+          data: { updateText: 'Thanks for subscribing — you will receive Arc quantum readiness updates as validators complete their post-quantum upgrades.' }
+        }),
+      }).catch(console.error);
+    } else if (code === '23505') {
+      toast("You are already subscribed!", "info");
+    } else {
+      toast(error || "Subscription failed. Please try again.", "error");
     }
+    setIsSubmitting(false);
   };
 
   return (

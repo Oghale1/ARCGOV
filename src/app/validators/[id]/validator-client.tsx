@@ -48,7 +48,7 @@ import SkeletonLoader from '@/components/shared/SkeletonLoader';
 import NetworkError from '@/components/shared/NetworkError';
 import VerifiedBadge from '@/components/shared/VerifiedBadge';
 import TestnetChip from '@/components/shared/TestnetChip';
-import supabase from '@/lib/supabase';
+import { submitForm } from '@/lib/submit';
 import { useAccount } from 'wagmi';
 import type { Validator } from '@/types';
 
@@ -150,44 +150,30 @@ export default function ValidatorClient() {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitError(null);
-    try {
-      const wallet = isConnected ? address : customWallet;
-      const { data, error } = await supabase
-        .from('staking_waitlist')
-        .insert([
-          {
-            validator_id: validator.id,
-            wallet_address: wallet,
-            email: email
-          }
-        ])
-        .select();
+    const wallet = isConnected ? address : customWallet;
+    const { ok, ref, error } = await submitForm('staking_waitlist', {
+      validator_id: validator.id,
+      wallet_address: wallet,
+      email: email,
+    });
 
-      if (error) throw error;
-      if (data) {
-        setSubmissionId(data[0].id.toString().slice(0, 8));
+    if (ok) {
+      setSubmissionId(ref || `AG${Date.now().toString(36).slice(-6).toUpperCase()}`);
 
-        // Send confirmation email — fire-and-forget, never block the UI.
-        fetch('/api/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'staking_waitlist',
-            to: email,
-            data: { validatorName: validator.name }
-          }),
-        }).catch(console.error);
-      }
-    } catch (err: any) {
-      console.error(err);
-      setSubmitError(
-        err?.message?.includes('relation') || err?.code === '42P01'
-          ? "Waitlist isn't set up yet — the staking_waitlist table is missing. Run the SQL migration."
-          : (err?.message || "Couldn't join the waitlist. Please try again.")
-      );
-    } finally {
-      setIsSubmitting(false);
+      // Send confirmation email — fire-and-forget, never block the UI.
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'staking_waitlist',
+          to: email,
+          data: { validatorName: validator.name }
+        }),
+      }).catch(console.error);
+    } else {
+      setSubmitError(error || "Couldn't join the waitlist. Please try again.");
     }
+    setIsSubmitting(false);
   };
 
   const isPlaceholderAddress = validator.validatorAddress?.startsWith("0x100000000000000000000000") || !validator.validatorAddress;
@@ -251,6 +237,17 @@ export default function ValidatorClient() {
             </a>
           </div>
         )}
+
+        {/* ILLUSTRATIVE-DATA DISCLAIMER */}
+        <div className="mb-8 p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 flex items-start gap-3">
+          <Info size={16} className="text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-[11px] font-bold text-amber-800 dark:text-amber-500 leading-relaxed">
+            <span className="uppercase tracking-widest">Illustrative profile</span> — this validator&apos;s
+            uptime, commission and quantum-upgrade status are sample / projected figures for demonstration,
+            not verified on-chain facts. Live, verifiable data is limited to the Arc Testnet network card below
+            and the current block height. Per-validator figures go live once Arc publishes official validator addresses.
+          </p>
+        </div>
 
         {/* SECTION 2 — STATS GRID */}
         <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4 text-center md:text-left">
@@ -416,10 +413,13 @@ export default function ValidatorClient() {
 
             {/* SECTION 4 — QUANTUM UPGRADE STATUS */}
             <section className="p-8 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-[32px]">
-              <h3 className="text-xl font-black mb-8 flex items-center gap-2">
+              <h3 className="text-xl font-black mb-2 flex items-center gap-2">
                 <Zap size={20} className="text-[#1D9E75]" />
                 Quantum Upgrade Status
               </h3>
+              <p className="text-[10px] font-bold text-amber-600/80 dark:text-amber-500/80 uppercase tracking-tight mb-8">
+                Illustrative / projected — not verified on-chain
+              </p>
               <div className="space-y-6">
                 {[
                   { label: 'Post-quantum wallet signatures', key: 'postQuantumWallet' },

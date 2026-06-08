@@ -19,7 +19,7 @@ import {
   Zap,
   Globe
 } from 'lucide-react';
-import supabase from '@/lib/supabase';
+import { submitForm } from '@/lib/submit';
 import { useToast } from '@/components/shared/Toast';
 
 // FAQ Data
@@ -75,24 +75,15 @@ export default function AboutPage() {
     }
 
     setIsSubmitting(true);
-    try {
-      const { data, error } = await supabase
-        .from('feedback')
-        .insert([formData])
-        .select();
-
-      if (error) throw error;
-
-      const refId = data?.[0]?.id?.toString().slice(0, 8) || 'SUCCESS';
-      setSubmissionId(refId);
+    const { ok, ref, error } = await submitForm('feedback', formData);
+    if (ok) {
+      setSubmissionId(ref || 'SUCCESS');
       toast("Feedback sent! Thank you.", "success");
       setFormData({ name: '', email: '', message: '' });
-    } catch (err) {
-      console.error(err);
-      toast("Submission failed. Table 'feedback' might be missing.", "error");
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      toast(error || "Submission failed. Please try again.", "error");
     }
+    setIsSubmitting(false);
   };
 
   return (

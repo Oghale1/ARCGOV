@@ -22,7 +22,7 @@ import Link from 'next/link';
 
 // Data & Libs
 import architectsData from '@/data/architects.json';
-import supabase from '@/lib/supabase';
+import { submitForm } from '@/lib/submit';
 import { useToast } from '@/components/shared/Toast';
 
 export default function Architects() {
@@ -53,31 +53,21 @@ export default function Architects() {
     }
 
     setIsSubmitting(true);
-    try {
-      const formattedXHandle = formData.xHandle.startsWith('@') ? formData.xHandle : `@${formData.xHandle}`;
-      
-      const { data, error } = await supabase
-        .from('architect_applications')
-        .insert([{
-          name: formData.name,
-          x_handle: formattedXHandle,
-          github_url: formData.githubUrl,
-          app_link: formData.appLink,
-          description: formData.description
-        }])
-        .select();
-
-      if (error) throw error;
-
-      const refId = data?.[0]?.id?.toString().slice(0, 8) || 'SUCCESS';
-      setSubmissionId(refId);
+    const formattedXHandle = formData.xHandle.startsWith('@') ? formData.xHandle : `@${formData.xHandle}`;
+    const { ok, ref, error } = await submitForm('architect_application', {
+      name: formData.name,
+      x_handle: formattedXHandle,
+      github_url: formData.githubUrl,
+      app_link: formData.appLink,
+      description: formData.description,
+    });
+    if (ok) {
+      setSubmissionId(ref || 'SUCCESS');
       toast("Application submitted successfully!", "success");
-    } catch (err) {
-      console.error(err);
-      toast("Submission failed. Table 'architect_applications' might be missing.", "error");
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      toast(error || "Submission failed. Please try again.", "error");
     }
+    setIsSubmitting(false);
   };
 
   const scrollToForm = () => {

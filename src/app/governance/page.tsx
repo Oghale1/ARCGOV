@@ -31,6 +31,7 @@ import ProposalCard from '@/components/governance/ProposalCard';
 import TestnetChip from '@/components/shared/TestnetChip';
 import { addDays, format } from 'date-fns';
 import supabase from '@/lib/supabase';
+import { submitForm } from '@/lib/submit';
 
 const CATEGORY_LABELS = ['VALIDATOR', 'PARAMETER', 'UPGRADE', 'ECOSYSTEM'];
 const CATEGORY_COLORS: any = {
@@ -191,31 +192,22 @@ export default function Governance() {
         publicClient as any
       );
 
-      // Store metadata off-chain. `custom_start` is optional — if the column
-      // hasn't been added to the table yet, fall back to inserting without it
-      // so submission never fails.
-      const baseRow: Record<string, any> = {
+      // Store metadata off-chain (custom voting window) via the server route,
+      // which writes with the service role and isn't blocked by RLS.
+      const { ok: metaOk, error: metaError } = await submitForm('proposal_metadata', {
         proposal_id: proposalId.toString(),
+        custom_start: start.toISOString(),
         custom_deadline: deadline.toISOString(),
-        submitter_wallet: address
-      };
-      const { error: insertError } = await supabase
-        .from('proposal_metadata')
-        .insert([{ ...baseRow, custom_start: start.toISOString() }]);
-      if (insertError) {
-        const { error: fallbackError } = await supabase
-          .from('proposal_metadata')
-          .insert([baseRow]);
-        // If BOTH inserts fail, the custom voting window was NOT persisted, so
-        // the proposal will fall back to the contract's hard-coded 7-day
-        // deadline on every read. Surface it instead of failing silently.
-        if (fallbackError) {
-          console.error('proposal_metadata insert failed:', insertError, fallbackError);
-          toast(
-            "Proposal submitted on-chain, but the custom voting window couldn't be saved (defaults to 7 days). Run the proposal_metadata SQL migration.",
-            "error"
-          );
-        }
+        submitter_wallet: address,
+      });
+      if (!metaOk) {
+        // The custom voting window was NOT persisted, so the proposal will fall
+        // back to the contract's hard-coded 7-day deadline on every read.
+        console.error('proposal_metadata insert failed:', metaError);
+        toast(
+          "Proposal submitted on-chain, but the custom voting window couldn't be saved (defaults to 7 days). Run the SQL migration.",
+          "error"
+        );
       }
 
       dismiss(toastId);

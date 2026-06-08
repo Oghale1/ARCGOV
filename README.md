@@ -47,12 +47,21 @@ ArcGov is a comprehensive dashboard and governance platform designed specificall
     ```
 
 ### 🗄️ Database Setup
-The project uses Supabase for storing metadata. To initialize the database:
-1.  Run the setup script:
-    ```bash
-    npx ts-node scripts/setup-db.ts
-    ```
-    *Note: This script requires a `SUPABASE_SERVICE_ROLE_KEY` in your `.env.local` and a Supabase RPC function named `exec_sql` to be configured.*
+The project uses Supabase for storing form submissions (validator applications,
+staking waitlist, architect applications, feedback, quantum subscribers,
+proposal metadata, and dashboard notification preferences).
+
+**Run the migration** — the schema lives in one file:
+`supabase/migrations/0001_arcgov_init.sql`
+
+Either:
+- **By hand (recommended):** open Supabase → SQL Editor → New query, paste the
+  file's contents, and click **Run**. It is idempotent (safe to re-run).
+- **Via script:** `npx ts-node scripts/setup-db.ts` (requires
+  `SUPABASE_SERVICE_ROLE_KEY` and an `exec_sql` RPC — the script prints the
+  manual steps if that RPC isn't set up).
+
+Without this migration the forms will fail with a "table missing" error.
 
 ## 🧪 Testing
 

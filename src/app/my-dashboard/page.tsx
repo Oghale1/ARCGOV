@@ -47,6 +47,7 @@ import {
 } from '@/lib/contract';
 import { getUSDCBalance } from '@/lib/arc-rpc';
 import supabase from '@/lib/supabase';
+import { submitForm } from '@/lib/submit';
 import { useToast } from '@/components/shared/Toast';
 
 // Components
@@ -216,23 +217,17 @@ export default function MyDashboard() {
   const handleSaveSettings = async () => {
     if (!address) return;
     setIsSavingSettings(true);
-    try {
-      const { error } = await supabase
-        .from('notification_preferences')
-        .upsert({
-          wallet_address: address,
-          ...settings,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
+    const { ok, error } = await submitForm('notification_preferences', {
+      wallet_address: address,
+      ...settings,
+      updated_at: new Date().toISOString(),
+    });
+    if (ok) {
       toast("Settings saved!", "success");
-    } catch (err) {
-      console.error(err);
-      toast("Failed to save settings. Table might be missing.", "error");
-    } finally {
-      setIsSavingSettings(false);
+    } else {
+      toast(error || "Failed to save settings. Please try again.", "error");
     }
+    setIsSavingSettings(false);
   };
 
   // --- RENDER HELPERS ---

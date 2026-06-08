@@ -6,7 +6,7 @@ import QuantumBadge from '@/components/validators/QuantumBadge';
 import TestnetChip from '@/components/shared/TestnetChip';
 import VerifiedBadge from '@/components/shared/VerifiedBadge';
 import validators from '@/data/validators.json';
-import supabase from '@/lib/supabase';
+import { submitForm } from '@/lib/submit';
 import { 
   Search, 
   ArrowUpDown, 
@@ -142,26 +142,13 @@ export default function ValidatorsPage() {
     e.preventDefault();
     setIsSubmitting(true);
     setApplyError(null);
-    try {
-      const { data, error } = await supabase
-        .from('validator_applications')
-        .insert([formData])
-        .select();
-
-      if (error) throw error;
-      if (data) {
-        setSubmissionId(data[0].id.toString().slice(0, 8));
-      }
-    } catch (err: any) {
-      console.error(err);
-      setApplyError(
-        err?.message?.includes('relation') || err?.code === '42P01'
-          ? "Applications aren't set up yet — the validator_applications table is missing. Run the SQL migration."
-          : (err?.message || "Failed to submit application. Please try again.")
-      );
-    } finally {
-      setIsSubmitting(false);
+    const { ok, ref, error } = await submitForm('validator_application', formData);
+    if (ok) {
+      setSubmissionId(ref || `AG${Date.now().toString(36).slice(-6).toUpperCase()}`);
+    } else {
+      setApplyError(error || "Failed to submit application. Please try again.");
     }
+    setIsSubmitting(false);
   };
 
   return (
@@ -184,7 +171,7 @@ export default function ValidatorsPage() {
             <div className="max-w-2xl text-center md:text-left">
               <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">Arc Validator Network</h1>
               <p className="text-lg text-gray-500 dark:text-gray-400">
-                8 institutional validators securing the Arc blockchain with sub-second finality and quantum-ready infrastructure.
+                An illustrative roster of institutional-grade validators built for the Arc blockchain&apos;s sub-second finality and quantum-ready infrastructure.
               </p>
             </div>
             <button 
@@ -212,6 +199,18 @@ export default function ValidatorsPage() {
             ))}
           </div>
         </section>
+
+        {/* ILLUSTRATIVE-DATA DISCLAIMER */}
+        <div className="mb-8 p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30">
+          <p className="text-[11px] font-bold text-amber-800 dark:text-amber-500 leading-relaxed">
+            <span className="uppercase tracking-widest">Illustrative roster</span> — validator names and the
+            uptime, commission and quantum-readiness figures shown here are sample / projected data for
+            demonstration, not verified on-chain facts. The only live, verifiable values are the Arc Testnet
+            network metrics and current block height (marked with the green &ldquo;Verified on-chain&rdquo; badge above).
+            Per-validator on-chain figures (e.g. Blocks Validated) populate automatically once Arc publishes
+            official validator addresses.
+          </p>
+        </div>
 
         {/* SECTION 3 — CONTROLS ROW */}
         <div className="flex flex-col lg:flex-row gap-4 mb-8">

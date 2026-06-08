@@ -1,152 +1,71 @@
 // ArcGov — arcgov.vercel.app
+// Database setup. This script simply runs `supabase/migrations/0001_arcgov_init.sql`
+// against your Supabase project so the table/column definitions live in exactly
+// ONE place (that .sql file), shared with anyone who pastes it into the
+// Supabase SQL Editor by hand.
+//
+// Usage:  npx ts-node scripts/setup-db.ts
+// Requires in .env.local:
+//   NEXT_PUBLIC_SUPABASE_URL
+//   SUPABASE_SERVICE_ROLE_KEY
+//   …and a Postgres function `exec_sql(sql_query text)` (see note at the bottom).
+// If `exec_sql` is not configured, the script tells you to paste the .sql file
+// into the Supabase SQL Editor instead — which always works.
+
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
+import * as fs from 'fs';
+import * as path from 'path';
+
 dotenv.config({ path: '.env.local' });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local');
+  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local');
   process.exit(1);
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+const MIGRATION_PATH = path.join(__dirname, '..', 'supabase', 'migrations', '0001_arcgov_init.sql');
+
+function manualFallback() {
+  console.log('\n──────────────────────────────────────────────────────────────');
+  console.log('Could not run the migration automatically (no `exec_sql` RPC).');
+  console.log('Easiest fix — run it by hand (takes ~15 seconds):');
+  console.log('  1. Open Supabase → SQL Editor → New query');
+  console.log(`  2. Paste the contents of: ${MIGRATION_PATH}`);
+  console.log('  3. Click "Run". Done.');
+  console.log('──────────────────────────────────────────────────────────────\n');
+}
+
 async function setupDatabase() {
-  console.log('🚀 Starting Database Setup...');
+  console.log('🚀 Running ArcGov database migration...');
 
-  const queries = [
-    // Create Tables
-    `CREATE TABLE IF NOT EXISTS validator_applications (
-      id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-      created_at timestamptz DEFAULT now(),
-      institution_name text NOT NULL,
-      country text NOT NULL,
-      contact_email text NOT NULL UNIQUE,
-      infrastructure_description text,
-      quantum_status text,
-      blockchain_experience text,
-      message_to_arc text,
-      status text DEFAULT 'pending'
-    );`,
-    `CREATE TABLE IF NOT EXISTS delegation_interest (
-      id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-      created_at timestamptz DEFAULT now(),
-      wallet_address text NOT NULL,
-      validator_id text NOT NULL,
-      email text
-    );`,
-    `CREATE TABLE IF NOT EXISTS staking_waitlist (
-      id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-      created_at timestamptz DEFAULT now(),
-      wallet_address text,
-      email text NOT NULL UNIQUE
-    );`,
-    `CREATE TABLE IF NOT EXISTS architect_applications (
-      id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-      created_at timestamptz DEFAULT now(),
-      name text NOT NULL,
-      x_handle text,
-      github_url text,
-      building_description text NOT NULL
-    );`,
-    `CREATE TABLE IF NOT EXISTS feedback (
-      id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-      created_at timestamptz DEFAULT now(),
-      name text,
-      email text,
-      message text NOT NULL
-    );`,
-    `CREATE TABLE IF NOT EXISTS notification_preferences (
-      id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-      created_at timestamptz DEFAULT now(),
-      wallet_address text NOT NULL UNIQUE,
-      email text,
-      new_proposals boolean DEFAULT true,
-      vote_deadlines boolean DEFAULT true,
-      validator_updates boolean DEFAULT false,
-      quantum_news boolean DEFAULT false
-    );`,
-    `CREATE TABLE IF NOT EXISTS quantum_subscribers (
-      id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-      created_at timestamptz DEFAULT now(),
-      email text NOT NULL UNIQUE
-    );`,
+  const sql = fs.readFileSync(MIGRATION_PATH, 'utf8');
 
-    // Enable RLS
-    `ALTER TABLE validator_applications ENABLE ROW LEVEL SECURITY;`,
-    `ALTER TABLE delegation_interest ENABLE ROW LEVEL SECURITY;`,
-    `ALTER TABLE staking_waitlist ENABLE ROW LEVEL SECURITY;`,
-    `ALTER TABLE architect_applications ENABLE ROW LEVEL SECURITY;`,
-    `ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;`,
-    `ALTER TABLE notification_preferences ENABLE ROW LEVEL SECURITY;`,
-    `ALTER TABLE quantum_subscribers ENABLE ROW LEVEL SECURITY;`,
-
-    // Policies - Anyone can insert
-    `DROP POLICY IF EXISTS "Anyone can insert validator_applications" ON validator_applications;`,
-    `CREATE POLICY "Anyone can insert validator_applications" ON validator_applications FOR INSERT TO anon WITH CHECK (true);`,
-    
-    `DROP POLICY IF EXISTS "Anyone can insert delegation_interest" ON delegation_interest;`,
-    `CREATE POLICY "Anyone can insert delegation_interest" ON delegation_interest FOR INSERT TO anon WITH CHECK (true);`,
-    
-    `DROP POLICY IF EXISTS "Anyone can insert staking_waitlist" ON staking_waitlist;`,
-    `CREATE POLICY "Anyone can insert staking_waitlist" ON staking_waitlist FOR INSERT TO anon WITH CHECK (true);`,
-    
-    `DROP POLICY IF EXISTS "Anyone can insert architect_applications" ON architect_applications;`,
-    `CREATE POLICY "Anyone can insert architect_applications" ON architect_applications FOR INSERT TO anon WITH CHECK (true);`,
-    
-    `DROP POLICY IF EXISTS "Anyone can insert feedback" ON feedback;`,
-    `CREATE POLICY "Anyone can insert feedback" ON feedback FOR INSERT TO anon WITH CHECK (true);`,
-    
-    `DROP POLICY IF EXISTS "Anyone can insert notification_preferences" ON notification_preferences;`,
-    `CREATE POLICY "Anyone can insert notification_preferences" ON notification_preferences FOR INSERT TO anon WITH CHECK (true);`,
-    
-    `DROP POLICY IF EXISTS "Anyone can insert quantum_subscribers" ON quantum_subscribers;`,
-    `CREATE POLICY "Anyone can insert quantum_subscribers" ON quantum_subscribers FOR INSERT TO anon WITH CHECK (true);`,
-
-    // Policies - Auth users can read
-    `DROP POLICY IF EXISTS "Auth users can read validator_applications" ON validator_applications;`,
-    `CREATE POLICY "Auth users can read validator_applications" ON validator_applications FOR SELECT TO authenticated USING (true);`,
-    
-    `DROP POLICY IF EXISTS "Auth users can read delegation_interest" ON delegation_interest;`,
-    `CREATE POLICY "Auth users can read delegation_interest" ON delegation_interest FOR SELECT TO authenticated USING (true);`,
-    
-    `DROP POLICY IF EXISTS "Auth users can read staking_waitlist" ON staking_waitlist;`,
-    `CREATE POLICY "Auth users can read staking_waitlist" ON staking_waitlist FOR SELECT TO authenticated USING (true);`,
-    
-    `DROP POLICY IF EXISTS "Auth users can read architect_applications" ON architect_applications;`,
-    `CREATE POLICY "Auth users can read architect_applications" ON architect_applications FOR SELECT TO authenticated USING (true);`,
-    
-    `DROP POLICY IF EXISTS "Auth users can read feedback" ON feedback;`,
-    `CREATE POLICY "Auth users can read feedback" ON feedback FOR SELECT TO authenticated USING (true);`,
-    
-    `DROP POLICY IF EXISTS "Auth users can read notification_preferences" ON notification_preferences;`,
-    `CREATE POLICY "Auth users can read notification_preferences" ON notification_preferences FOR SELECT TO authenticated USING (true);`,
-    
-    `DROP POLICY IF EXISTS "Auth users can read quantum_subscribers" ON quantum_subscribers;`,
-    `CREATE POLICY "Auth users can read quantum_subscribers" ON quantum_subscribers FOR SELECT TO authenticated USING (true);`
-  ];
-
-  for (const query of queries) {
-    let error;
-    try {
-      const result = await supabase.rpc('exec_sql', { sql_query: query });
-      error = result.error;
-    } catch (err: any) {
-      error = { message: err.message || 'Unknown error' };
-    }
-
-    if (error) {
-      // If RPC fails, we will have to explain to the user how to add the helper or run manually.
-      console.error(`Error executing query: ${query.substring(0, 50)}...`);
-      console.error(`Message: ${error.message}`);
-    } else {
-      console.log(`✅ Success: ${query.substring(0, 50)}...`);
-    }
+  // Try to run the whole file in one shot via an exec_sql RPC.
+  try {
+    const { error } = await supabase.rpc('exec_sql', { sql_query: sql });
+    if (error) throw error;
+    console.log('✅ Migration applied successfully.');
+    console.log('🏁 Database setup finished!');
+    return;
+  } catch (err: any) {
+    console.error(`Automatic run failed: ${err?.message || err}`);
+    manualFallback();
+    process.exit(1);
   }
-
-  console.log('🏁 Database Setup Finished!');
 }
 
 setupDatabase();
+
+// ── Optional: enabling the automatic path ───────────────────────────────────
+// To let this script run without manual copy-paste, add this helper ONCE in the
+// Supabase SQL Editor (service-role only; never expose it to the anon key):
+//
+//   create or replace function exec_sql(sql_query text)
+//   returns void language plpgsql security definer as $$
+//   begin execute sql_query; end; $$;
