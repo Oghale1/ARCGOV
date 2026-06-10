@@ -213,8 +213,8 @@ export default function Navbar() {
           {isNotifOpen && (
             <div className="absolute top-[48px] right-0 w-[320px] bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                <div className="p-4 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/30">
-                  <h3 className="text-xs font-black uppercase tracking-widest">Governance Notifications</h3>
-                  <button onClick={markAllRead} className="text-[10px] font-bold text-[#1D9E75] hover:underline">Mark all read</button>
+                  <h3 className="text-xs font-black uppercase tracking-widest">{t('nav.notifications')}</h3>
+                  <button onClick={markAllRead} className="text-[10px] font-bold text-[#1D9E75] hover:underline">{t('nav.mark_all_read')}</button>
                </div>
                <div className="max-h-[400px] overflow-y-auto">
                   {notifications.length > 0 ? (
@@ -227,10 +227,10 @@ export default function Navbar() {
                              </div>
                              <div className="min-w-0">
                                 <p className="text-xs font-bold leading-snug line-clamp-2">
-                                   {n.type === 'ProposalCreated' ? `New proposal: ${n.title}` : `New vote cast on #${n.proposalId}`}
+                                   {n.type === 'ProposalCreated' ? `${t('nav.new_proposal')}: ${n.title}` : `${t('nav.new_vote_on')} #${n.proposalId}`}
                                 </p>
                                 <p className="text-[9px] text-gray-400 mt-1 font-medium flex items-center gap-1">
-                                   <Clock size={8} /> Just now
+                                   <Clock size={8} /> {t('nav.just_now')}
                                 </p>
                              </div>
                           </div>
@@ -240,12 +240,12 @@ export default function Navbar() {
                   ) : (
                     <div className="p-12 text-center">
                        <AlertCircle className="mx-auto text-gray-300 mb-2" size={24} />
-                       <p className="text-xs text-gray-500 font-medium">No recent activity</p>
+                       <p className="text-xs text-gray-500 font-medium">{t('nav.no_recent_activity')}</p>
                     </div>
                   )}
                </div>
                <Link href="/" onClick={() => setIsNotifOpen(false)} className="block p-3 text-center border-t border-gray-50 dark:border-gray-800 text-[10px] font-black text-[#1D9E75] hover:bg-gray-50 dark:hover:bg-gray-900 transition-all uppercase tracking-widest">
-                  View all activity <ChevronRight size={10} className="inline ml-1" />
+                  {t('nav.view_all_activity')} <ChevronRight size={10} className="inline ml-1" />
                </Link>
             </div>
           )}

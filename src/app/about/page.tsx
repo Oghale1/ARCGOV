@@ -20,46 +20,24 @@ import {
 } from 'lucide-react';
 import { submitForm } from '@/lib/submit';
 import { useToast } from '@/components/shared/Toast';
-
-// FAQ Data
-const FAQS = [
-  {
-    q: "Is ArcGov the official Arc governance site?",
-    a: "No. ArcGov is an independent community-built dashboard. We are not affiliated with Circle or the official Arc team."
-  },
-  {
-    q: "Do I need tokens to vote on proposals?",
-    a: "On testnet: any wallet can vote for free. At mainnet launch: Arc tokens will be required for weighted voting on protocol changes."
-  },
-  {
-    q: "How do I get testnet USDC for gas?",
-    a: "Visit faucet.circle.com, select Arc Testnet, enter your wallet address, and you will receive 10 testnet USDC free of charge."
-  },
-  {
-    q: "What is the Arc Testnet chain ID?",
-    a: "The chain ID is 5042002. You can add this to MetaMask under Settings → Networks using the RPC URL: https://rpc.testnet.arc.network"
-  },
-  {
-    q: "Are governance votes binding?",
-    a: "On testnet, they serve as signal votes for the community. At mainnet with the native Arc token, passed proposals can trigger automated on-chain execution."
-  },
-  {
-    q: "How do validators get added to Arc?",
-    a: "Circle approves validators directly based on strict criteria including compliance, security standards, and jurisdictional diversity."
-  },
-  {
-    q: "What is quantum readiness?",
-    a: "Post-quantum cryptography protects against future quantum computers that could break current encryption. Arc is proactively upgrading its entire infrastructure."
-  },
-  {
-    q: "How do I build on Arc?",
-    a: "Visit docs.arc.network for comprehensive developer documentation, tutorials, and technical RPC details for building your own dApps."
-  }
-];
+import { useTranslation } from '@/lib/i18n';
 
 export default function AboutPage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // FAQ Data (translated)
+  const FAQS = [
+    { q: t('about.faq_q1'), a: t('about.faq_a1') },
+    { q: t('about.faq_q2'), a: t('about.faq_a2') },
+    { q: t('about.faq_q3'), a: t('about.faq_a3') },
+    { q: t('about.faq_q4'), a: t('about.faq_a4') },
+    { q: t('about.faq_q5'), a: t('about.faq_a5') },
+    { q: t('about.faq_q6'), a: t('about.faq_a6') },
+    { q: t('about.faq_q7'), a: t('about.faq_a7') },
+    { q: t('about.faq_q8'), a: t('about.faq_a8') },
+  ];
 
   // Feedback Form State
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -69,7 +47,7 @@ export default function AboutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) {
-      toast("Please fill in all fields", "error");
+      toast(t('about.fill_fields'), "error");
       return;
     }
 
@@ -77,10 +55,10 @@ export default function AboutPage() {
     const { ok, ref, error } = await submitForm('feedback', formData);
     if (ok) {
       setSubmissionId(ref || 'SUCCESS');
-      toast("Feedback sent! Thank you.", "success");
+      toast(t('about.feedback_sent'), "success");
       setFormData({ name: '', email: '', message: '' });
     } else {
-      toast(error || "Submission failed. Please try again.", "error");
+      toast(error || t('about.submit_failed'), "error");
     }
     setIsSubmitting(false);
   };
@@ -91,21 +69,18 @@ export default function AboutPage() {
         {/* SECTION 1 — WHAT IS ARCGOV */}
         <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="flex items-center gap-3 text-[#1D9E75] font-black text-xs uppercase tracking-widest mb-4">
-            <Info size={16} /> Independence
+            <Info size={16} /> {t('about.independence')}
           </div>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-8">About ArcGov</h1>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-8">{t('about.title')}</h1>
           <div className="space-y-6 text-lg text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
             <p>
-              ArcGov is the first community-built governance and validator dashboard designed specifically for the Arc blockchain. 
-              Our mission is to provide transparency and accessibility to the network&apos;s most critical decision-making processes.
+              {t('about.p1')}
             </p>
             <p>
-              We built ArcGov before Circle even needed it—believing that community-owned infrastructure is vital for the 
-              long-term health of the Arc ecosystem. We provide the tools for builders and users to track network health and shape its future.
+              {t('about.p2')}
             </p>
             <p>
-              ArcGov is independent and non-commercial. We are not affiliated with,
-              sponsored by, or endorsed by Circle Internet Financial Ltd.
+              {t('about.p3')}
             </p>
           </div>
         </section>
@@ -114,32 +89,27 @@ export default function AboutPage() {
         <section className="bg-gray-50/50 dark:bg-gray-900/30 border-y border-gray-100 dark:border-gray-800 py-24">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 text-[#1D9E75] font-black text-xs uppercase tracking-widest mb-4">
-              <Zap size={16} /> Technology
+              <Zap size={16} /> {t('about.technology')}
             </div>
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-8">About Arc Blockchain</h2>
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-8">{t('about.about_arc')}</h2>
             <div className="space-y-6 text-gray-500 dark:text-gray-400 leading-relaxed mb-10">
               <p>
-                Circle built Arc as a stablecoin-native Layer-1 blockchain, engineered from the ground up 
-                to support the world&apos;s most trusted digital assets with institutional-grade security and scale.
+                {t('about.arc_p1')}
               </p>
               <p>
-                Arc uses USDC as the native gas token, eliminating the volatility of traditional gas fees. 
-                It features sub-second finality and is fully EVM compatible, making it the perfect environment 
-                for global payment protocols and DeFi applications.
+                {t('about.arc_p2')}
               </p>
               <p>
-                The network is secured by a diverse set of institutional validators and is following an 
-                ambitious quantum-resistant roadmap, ensuring that assets on Arc remain protected 
-                against future cryptographic threats.
+                {t('about.arc_p3')}
               </p>
             </div>
-            <a 
-              href="https://arc.network" 
-              target="_blank" 
+            <a
+              href="https://arc.network"
+              target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm font-black text-[#1D9E75] hover:underline"
             >
-              Learn more at arc.network <ExternalLink size={16} />
+              {t('about.learn_more')} <ExternalLink size={16} />
             </a>
           </div>
         </section>
@@ -147,9 +117,9 @@ export default function AboutPage() {
         {/* SECTION 4 — FAQ */}
         <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="flex items-center gap-3 text-[#1D9E75] font-black text-xs uppercase tracking-widest mb-4">
-            <HelpCircle size={16} /> FAQ
+            <HelpCircle size={16} /> {t('about.faq')}
           </div>
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-12">Frequently Asked Questions</h2>
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-12">{t('about.faq_title')}</h2>
           
           <div className="space-y-4">
             {FAQS.map((faq, i) => (
@@ -175,20 +145,20 @@ export default function AboutPage() {
         <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
            <div className="p-10 md:p-12 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-[48px] space-y-10">
               <div className="text-center space-y-2">
-                 <h2 className="text-3xl font-black">Send us feedback</h2>
-                 <p className="text-gray-500 text-sm">Have an idea or spotted a bug? We&apos;d love to hear from you.</p>
+                 <h2 className="text-3xl font-black">{t('about.feedback_title')}</h2>
+                 <p className="text-gray-500 text-sm">{t('about.feedback_desc')}</p>
               </div>
 
               {submissionId ? (
                 <div className="p-10 bg-[#1D9E75]/10 border border-[#1D9E75]/20 rounded-3xl text-center space-y-4 animate-in zoom-in duration-300">
                    <CheckCircle2 size={48} className="text-[#1D9E75] mx-auto" />
-                   <h4 className="text-xl font-bold">✓ Feedback received</h4>
-                   <p className="text-xs text-gray-500">Reference: <span className="font-mono text-[#1D9E75]">{submissionId}</span>. We&apos;ll get back to you soon.</p>
-                   <button 
+                   <h4 className="text-xl font-bold">✓ {t('about.feedback_received')}</h4>
+                   <p className="text-xs text-gray-500">{t('common.reference')}: <span className="font-mono text-[#1D9E75]">{submissionId}</span>. {t('about.feedback_received_desc')}</p>
+                   <button
                     onClick={() => setSubmissionId(null)}
                     className="px-6 py-3 text-xs font-black text-[#1D9E75] hover:underline"
                    >
-                     SEND ANOTHER MESSAGE
+                     {t('about.send_another')}
                    </button>
                 </div>
               ) : (
@@ -196,12 +166,12 @@ export default function AboutPage() {
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                          <User size={12} /> Name
+                          <User size={12} /> {t('about.name')}
                         </label>
-                        <input 
-                          type="text" 
-                          required 
-                          placeholder="Your Name"
+                        <input
+                          type="text"
+                          required
+                          placeholder={t('about.name_placeholder')}
                           className="w-full h-14 px-5 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-2xl outline-none focus:ring-2 focus:ring-[#1D9E75] transition-all font-medium"
                           value={formData.name}
                           onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -209,7 +179,7 @@ export default function AboutPage() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                          <Mail size={12} /> Email
+                          <Mail size={12} /> {t('about.email')}
                         </label>
                         <input 
                           type="email" 
@@ -224,12 +194,12 @@ export default function AboutPage() {
 
                    <div className="space-y-2">
                       <label className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                        <MessageSquare size={12} /> Message
+                        <MessageSquare size={12} /> {t('about.message')}
                       </label>
-                      <textarea 
-                        required 
+                      <textarea
+                        required
                         rows={5}
-                        placeholder="Tell us what's on your mind..."
+                        placeholder={t('about.message_placeholder')}
                         className="w-full px-5 py-4 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-2xl outline-none focus:ring-2 focus:ring-[#1D9E75] transition-all font-medium resize-none"
                         value={formData.message}
                         onChange={(e) => setFormData({...formData, message: e.target.value})}
@@ -241,7 +211,7 @@ export default function AboutPage() {
                     disabled={isSubmitting}
                     className="w-full h-14 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all shadow-lg shadow-[#1D9E75]/20 flex items-center justify-center gap-2"
                    >
-                     {isSubmitting ? <Loader2 className="animate-spin" /> : <><Send size={18} /> SEND FEEDBACK</>}
+                     {isSubmitting ? <Loader2 className="animate-spin" /> : <><Send size={18} /> {t('about.send_feedback')}</>}
                    </button>
                 </form>
               )}

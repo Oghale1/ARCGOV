@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { getAllProposals } from '@/lib/contract';
 import supabase from '@/lib/supabase';
 import { getVotingStart, getEffectiveDeadline, getProposalStatus } from '@/lib/proposal-status';
+import { useTranslation } from '@/lib/i18n';
 
 const CATEGORY_LABELS = ['VALIDATOR', 'PARAMETER', 'UPGRADE', 'ECOSYSTEM'];
 const CATEGORY_COLORS: any = {
@@ -24,6 +25,7 @@ const CATEGORY_COLORS: any = {
 };
 
 export default function GovernanceCalendar() {
+  const { t } = useTranslation();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [proposals, setProposals] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -135,7 +137,7 @@ export default function GovernanceCalendar() {
                >
                   <div className="flex items-center gap-1.5 p-1 bg-blue-500/10 border border-blue-500/20 rounded-md hover:bg-blue-500 transition-all">
                      <div className="w-1 h-1 rounded-full bg-blue-500 group-hover:bg-white shrink-0" />
-                     <span className="text-[8px] md:text-[9px] font-bold text-blue-600 dark:text-blue-400 group-hover:text-white truncate">#{p.id.toString()} opened</span>
+                     <span className="text-[8px] md:text-[9px] font-bold text-blue-600 dark:text-blue-400 group-hover:text-white truncate">#{p.id.toString()} {t('calendar.opened_label')}</span>
                   </div>
                </Link>
              ))}
@@ -151,7 +153,7 @@ export default function GovernanceCalendar() {
                  >
                     <div className={`flex items-center gap-1.5 p-1 rounded-md border transition-all ${active ? 'bg-[#1D9E75]/10 border-[#1D9E75]/20 hover:bg-[#1D9E75]' : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-300 dark:hover:bg-gray-700'}`}>
                        <div className={`w-1 h-1 rounded-full shrink-0 ${active ? 'bg-[#1D9E75] animate-pulse group-hover:bg-white' : 'bg-gray-400'}`} />
-                       <span className={`text-[8px] md:text-[9px] font-bold truncate ${active ? 'text-[#1D9E75] group-hover:text-white' : 'text-gray-500'}`}>#{p.id.toString()} {active ? 'closes' : 'closed'}</span>
+                       <span className={`text-[8px] md:text-[9px] font-bold truncate ${active ? 'text-[#1D9E75] group-hover:text-white' : 'text-gray-500'}`}>#{p.id.toString()} {active ? t('calendar.closes_label') : t('calendar.closed_label')}</span>
                     </div>
                  </Link>
                );
@@ -192,25 +194,25 @@ export default function GovernanceCalendar() {
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         <Link href="/governance" className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-[#1D9E75] transition-all mb-8 group min-h-[44px]">
            <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-           Back to Governance
+           {t('calendar.back')}
         </Link>
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-32 space-y-4 text-center">
              <Loader2 className="animate-spin text-[#1D9E75]" size={40} />
-             <p className="text-sm font-black text-gray-400 uppercase tracking-widest">Synchronizing calendar...</p>
+             <p className="text-sm font-black text-gray-400 uppercase tracking-widest">{t('calendar.syncing')}</p>
           </div>
         ) : (
           <div className="space-y-12">
             <div>
                {renderHeader()}
                <div className="flex flex-wrap items-center gap-4 mb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500" /> Opened</span>
-                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#1D9E75]" /> Closing</span>
-                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400" /> Closed</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500" /> {t('calendar.opened')}</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#1D9E75]" /> {t('calendar.closing')}</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400" /> {t('calendar.closed')}</span>
                </div>
                <div className="grid grid-cols-7 mb-4">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                  {[t('calendar.mon'), t('calendar.tue'), t('calendar.wed'), t('calendar.thu'), t('calendar.fri'), t('calendar.sat'), t('calendar.sun')].map((day) => (
                     <div key={day} className="text-center text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 py-2">{day}</div>
                   ))}
                </div>
@@ -219,9 +221,9 @@ export default function GovernanceCalendar() {
 
             <div className="space-y-8">
                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <h3 className="text-2xl font-black">Upcoming Deadlines</h3>
+                  <h3 className="text-2xl font-black">{t('calendar.upcoming')}</h3>
                   <div className="px-3 py-1 bg-gray-50 dark:bg-gray-900 rounded-full border border-gray-100 dark:border-gray-800 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                     {upcomingDeadlines.length} Active Voting Windows
+                     {upcomingDeadlines.length} {t('calendar.active_windows')}
                   </div>
                </div>
 
@@ -242,7 +244,7 @@ export default function GovernanceCalendar() {
                            <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-900">
                               <div className="flex items-center gap-1.5 text-[#1D9E75] text-[10px] font-black uppercase tracking-tighter">
                                  <Clock size={12} />
-                                 {p.daysLeft <= 0 ? 'Closes Today' : `Closes in ${p.daysLeft} days`}
+                                 {p.daysLeft <= 0 ? t('calendar.closes_today') : t('calendar.closes_in', { n: p.daysLeft })}
                               </div>
                               <div className="text-[10px] font-bold text-gray-400">
                                  {p.deadline.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -255,8 +257,8 @@ export default function GovernanceCalendar() {
                ) : (
                  <div className="p-12 bg-gray-50/50 dark:bg-gray-900/30 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-[40px] text-center">
                     <Info className="mx-auto text-gray-300 mb-4" size={32} />
-                    <p className="text-gray-500 font-bold">No upcoming voting deadlines</p>
-                    <p className="text-sm text-gray-400">Proposals will appear here once they are submitted on-chain.</p>
+                    <p className="text-gray-500 font-bold">{t('calendar.no_deadlines')}</p>
+                    <p className="text-sm text-gray-400">{t('calendar.no_deadlines_desc')}</p>
                  </div>
                )}
             </div>

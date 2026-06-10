@@ -17,9 +17,12 @@ import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 
 // Libs
-import { ARCGovCoreABI } from '@/lib/contract';
+import { ARCGovCoreABI, ARC_GOV_CORE_ADDRESS } from '@/lib/contract';
 
-const CONTRACT_ADDRESS = '0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99' as `0x${string}`;
+// Live, env-backed governance contract (data/deployment.json). Using the shared
+// constant keeps the activity feed in sync with where votes/proposals actually
+// land — the old hardcoded 0x6cFe85… deployment was dead, so the feed was blank.
+const CONTRACT_ADDRESS = ARC_GOV_CORE_ADDRESS;
 
 interface ActivityEvent {
   type: 'ProposalCreated' | 'VoteCast';

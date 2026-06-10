@@ -4,6 +4,7 @@
 import React from 'react';
 import { ExternalLink, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from '@/lib/i18n';
 
 interface VerifiedBadgeProps {
   explorerUrl: string;
@@ -18,8 +19,9 @@ export default function VerifiedBadge({
   blockNumber, 
   lastFetchedAt, 
   onRefresh, 
-  isLoading 
+  isLoading
 }: VerifiedBadgeProps) {
+  const { t } = useTranslation();
   if (!lastFetchedAt && isLoading) {
     return (
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-2 min-h-[44px]">
@@ -47,15 +49,15 @@ export default function VerifiedBadge({
         className="flex items-center gap-1.5 text-[10px] font-black text-[#1D9E75] uppercase tracking-widest hover:underline group"
       >
         <CheckCircle2 size={12} className="shrink-0" />
-        Verified on-chain
+        {t('common.verified_onchain')}
         <ExternalLink size={10} className="shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
       </a>
-      
+
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5 text-[9px] font-bold text-gray-400 uppercase tracking-tighter">
-           <span className="shrink-0">Block {blockNumber ? `#${blockNumber}` : '—'}</span>
+           <span className="shrink-0">{t('common.block')} {blockNumber ? `#${blockNumber}` : '—'}</span>
            <span className="w-1 h-1 rounded-full bg-gray-200 dark:bg-gray-800 shrink-0" />
-           <span className="whitespace-nowrap">Updated {formatDistanceToNow(lastFetchedAt, { addSuffix: true })}</span>
+           <span className="whitespace-nowrap">{t('common.updated')} {formatDistanceToNow(lastFetchedAt, { addSuffix: true })}</span>
         </div>
 
         {onRefresh && (

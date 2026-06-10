@@ -50,11 +50,13 @@ import VerifiedBadge from '@/components/shared/VerifiedBadge';
 import TestnetChip from '@/components/shared/TestnetChip';
 import { submitForm } from '@/lib/submit';
 import { useAccount } from 'wagmi';
+import { useTranslation } from '@/lib/i18n';
 import type { Validator } from '@/types';
 
 export default function ValidatorClient() {
   const { id } = useParams();
   const { address, isConnected } = useAccount();
+  const { t } = useTranslation();
   
   // Modal & Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -136,10 +138,10 @@ export default function ValidatorClient() {
       <div className="flex flex-col">
         <main className="flex-grow flex flex-col items-center justify-center p-4">
           <AlertTriangle size={64} className="text-gray-200 mb-6" />
-          <h2 className="text-2xl font-black mb-2">Validator Not Found</h2>
-          <p className="text-gray-500 mb-8">The validator ID #{id} does not exist in our network.</p>
+          <h2 className="text-2xl font-black mb-2">{t('validatorDetail.not_found')}</h2>
+          <p className="text-gray-500 mb-8">{t('validatorDetail.not_found_desc', { id: String(id) })}</p>
           <Link href="/validators" className="px-8 h-12 flex items-center justify-center bg-[#1D9E75] text-white font-black rounded-xl">
-            Back to Network
+            {t('validatorDetail.back_to_network')}
           </Link>
         </main>
       </div>
@@ -171,7 +173,7 @@ export default function ValidatorClient() {
         }),
       }).catch(console.error);
     } else {
-      setSubmitError(error || "Couldn't join the waitlist. Please try again.");
+      setSubmitError(error || t('validatorDetail.join_failed'));
     }
     setIsSubmitting(false);
   };
@@ -184,7 +186,7 @@ export default function ValidatorClient() {
         {/* BACK LINK */}
         <Link href="/validators" className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-[#1D9E75] transition-all mb-10 group">
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-          Back to all validators
+          {t('validatorDetail.back')}
         </Link>
 
         {error && (
@@ -212,13 +214,13 @@ export default function ValidatorClient() {
                 <span className="flex items-center gap-1.5">
                   <div className={`w-2 h-2 rounded-full ${activity?.isRecentlyActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
                   <span className={`text-[10px] font-black uppercase tracking-widest ${activity?.isRecentlyActive ? 'text-green-600' : 'text-gray-400'}`} title="Based on Arc Testnet block production">
-                    {activity?.isRecentlyActive ? 'Recently Active' : 'Address Pending'}
+                    {activity?.isRecentlyActive ? t('validatorDetail.recently_active') : t('validatorDetail.address_pending')}
                   </span>
                 </span>
               )}
 
               <span className="flex items-center gap-1.5 text-xs">
-                <Clock size={16} /> Arc Validator since {new Date(validator.joinedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                <Clock size={16} /> {t('validatorDetail.validator_since')} {new Date(validator.joinedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
               </span>
             </div>
           </div>
@@ -233,7 +235,7 @@ export default function ValidatorClient() {
               rel="noopener noreferrer"
               className="text-xs font-bold text-[#1D9E75] hover:underline flex items-center gap-1.5 min-h-[44px]"
             >
-              View on Arc Testnet Explorer <ExternalLink size={14} />
+              {t('validatorDetail.view_explorer')} <ExternalLink size={14} />
             </a>
           </div>
         )}
@@ -242,37 +244,34 @@ export default function ValidatorClient() {
         <div className="mb-8 p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 flex items-start gap-3">
           <Info size={16} className="text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
           <p className="text-[11px] font-bold text-amber-800 dark:text-amber-500 leading-relaxed">
-            <span className="uppercase tracking-widest">Illustrative profile</span> — this validator&apos;s
-            uptime, commission and quantum-upgrade status are sample / projected figures for demonstration,
-            not verified on-chain facts. Live, verifiable data is limited to the Arc Testnet network card below
-            and the current block height. Per-validator figures go live once Arc publishes official validator addresses.
+            <span className="uppercase tracking-widest">{t('validatorDetail.disclaimer_label')}</span> {t('validatorDetail.disclaimer')}
           </p>
         </div>
 
         {/* SECTION 2 — STATS GRID */}
         <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4 text-center md:text-left">
           <div className="p-6 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-3xl">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Uptime</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('validatorDetail.uptime')}</p>
             <p className={`text-2xl font-black ${validator.uptime >= 99.9 ? 'text-green-500' : 'text-amber-500'}`}>
               {validator.uptime}%
             </p>
           </div>
           <div className="p-6 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-3xl">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Commission</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('validatorDetail.commission')}</p>
             <p className="text-2xl font-black">{validator.commission}%</p>
           </div>
           <div className="p-6 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-3xl relative overflow-hidden">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Staked</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('validatorDetail.total_staked')}</p>
             <p className="text-2xl font-black text-gray-300">0 USDC <TestnetChip /></p>
             <span className="absolute top-2 right-2 text-[8px] font-black bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded uppercase text-gray-500">Testnet</span>
           </div>
           <div className="p-6 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-3xl relative overflow-hidden">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Self Stake</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('validatorDetail.self_stake')}</p>
             <p className="text-2xl font-black text-gray-300">0 USDC <TestnetChip /></p>
             <span className="absolute top-2 right-2 text-[8px] font-black bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded uppercase text-gray-500">Testnet</span>
           </div>
           <div className="p-6 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-3xl relative overflow-hidden">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Blocks Validated</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('validatorDetail.blocks_validated')}</p>
             {isLoadingLive ? (
               <SkeletonLoader width="60px" height="32px" />
             ) : blocksValidated > 0 ? (
@@ -283,10 +282,10 @@ export default function ValidatorClient() {
             <span className="absolute top-2 right-2 text-[8px] font-black bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded uppercase text-gray-500">Testnet</span>
           </div>
           <div className="p-6 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-3xl">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Slash Events</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('validatorDetail.slash_events')}</p>
             <div className="flex items-center justify-center md:justify-start gap-2">
               <p className="text-2xl font-black text-green-500">0 <TestnetChip /></p>
-              <span className="text-[10px] font-bold text-green-500 uppercase tracking-tight">Clean record</span>
+              <span className="text-[10px] font-bold text-green-500 uppercase tracking-tight">{t('validatorDetail.clean_record')}</span>
             </div>
           </div>
         </section>
@@ -296,15 +295,15 @@ export default function ValidatorClient() {
           <div className="p-6 bg-[#E1F5EE] dark:bg-[#1D9E75]/5 border border-[#1D9E75]/10 rounded-3xl">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-[10px] font-black text-[#1D9E75] uppercase tracking-widest flex items-center gap-2">
-                <Database size={14} /> Arc Testnet Network — Live from Blockscout
+                <Database size={14} /> {t('validatorDetail.network_live')}
               </h4>
-              <a 
-                href="https://testnet.arcscan.app" 
-                target="_blank" 
+              <a
+                href="https://testnet.arcscan.app"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-[9px] font-bold text-[#1D9E75] hover:underline"
               >
-                Powered by Blockscout
+                {t('validatorDetail.powered_blockscout')}
               </a>
             </div>
             {isLoadingLive || !networkStats ? (
@@ -314,19 +313,19 @@ export default function ValidatorClient() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <p className="text-[9px] font-bold text-gray-400 uppercase">Total Blocks</p>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase">{t('validatorDetail.total_blocks')}</p>
                   <p className="text-sm font-black">{networkStats.totalBlocks}</p>
                 </div>
                 <div>
-                  <p className="text-[9px] font-bold text-gray-400 uppercase">Transactions</p>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase">{t('validatorDetail.transactions')}</p>
                   <p className="text-sm font-black">{networkStats.totalTransactions}</p>
                 </div>
                 <div>
-                  <p className="text-[9px] font-bold text-gray-400 uppercase">Avg Block Time</p>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase">{t('validatorDetail.avg_block_time')}</p>
                   <p className="text-sm font-black">{networkStats.averageBlockTime}</p>
                 </div>
                 <div>
-                  <p className="text-[9px] font-bold text-gray-400 uppercase">Total Addresses</p>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase">{t('validatorDetail.total_addresses')}</p>
                   <p className="text-sm font-black">{networkStats.totalAddresses}</p>
                 </div>
               </div>
@@ -353,15 +352,15 @@ export default function ValidatorClient() {
                 <div className="flex flex-col">
                   <h3 className="text-xl font-black flex items-center justify-center sm:justify-start gap-2 mb-2">
                     <Activity size={20} className="text-[#1D9E75]" />
-                    {timeframe === '24h' ? '24-Hour' : timeframe === '7d' ? '7-Day' : '30-Day'} Uptime History
+                    {timeframe === '24h' ? t('validatorDetail.uptime_24h') : timeframe === '7d' ? t('validatorDetail.uptime_7d') : t('validatorDetail.uptime_30d')} {t('validatorDetail.uptime_history')}
                   </h3>
                   {isLoadingLive ? (
                     <SkeletonLoader width="300px" height="12px" />
                   ) : (
                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tight leading-relaxed max-w-md">
                       {blocksValidated > 0
-                        ? `Uptime estimated from ${blocksValidated.toLocaleString()} blocks validated on Arc Testnet`
-                        : 'Projected uptime from institutional SLA. Live network metrics shown in the card above; per-validator history goes live when Arc publishes validator addresses.'}
+                        ? t('validatorDetail.uptime_from_blocks', { n: blocksValidated.toLocaleString() })
+                        : t('validatorDetail.uptime_projected')}
                     </p>
                   )}
                 </div>
@@ -406,8 +405,8 @@ export default function ValidatorClient() {
               </div>
               <p className="mt-6 text-[10px] font-bold text-gray-400 italic text-center md:text-left">
                 {blocksValidated > 0
-                  ? 'Live Testnet activity detected'
-                  : `Projected ${timeframe} uptime · anchored to ${validator.uptime}% institutional SLA`}
+                  ? t('validatorDetail.live_detected')
+                  : t('validatorDetail.projected_uptime', { tf: timeframe, uptime: validator.uptime })}
               </p>
             </section>
 
@@ -415,16 +414,16 @@ export default function ValidatorClient() {
             <section className="p-8 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-[32px]">
               <h3 className="text-xl font-black mb-2 flex items-center gap-2">
                 <Zap size={20} className="text-[#1D9E75]" />
-                Quantum Upgrade Status
+                {t('validatorDetail.quantum_upgrade')}
               </h3>
               <p className="text-[10px] font-bold text-amber-600/80 dark:text-amber-500/80 uppercase tracking-tight mb-8">
-                Illustrative / projected — not verified on-chain
+                {t('validatorDetail.quantum_illustrative')}
               </p>
               <div className="space-y-6">
                 {[
-                  { label: 'Post-quantum wallet signatures', key: 'postQuantumWallet' },
-                  { label: 'Private state encryption', key: 'privateStateEncryption' },
-                  { label: 'Validator signature hardening', key: 'signatureHardening' },
+                  { label: t('validatorDetail.pq_wallet'), key: 'postQuantumWallet' },
+                  { label: t('validatorDetail.private_state'), key: 'privateStateEncryption' },
+                  { label: t('validatorDetail.sig_hardening'), key: 'signatureHardening' },
                 ].map((check) => {
                   const isDone = validator.quantumChecks[check.key as keyof typeof validator.quantumChecks];
                   return (
@@ -448,31 +447,31 @@ export default function ValidatorClient() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#1D9E75] rounded-full blur-[80px] -mr-16 -mt-16 opacity-20" />
               <div className="relative z-10">
                 <ShieldCheck size={40} className="text-[#1D9E75] mb-4 mx-auto md:mx-0" />
-                <h3 className="text-2xl font-black leading-tight mb-2">Staking Waitlist</h3>
+                <h3 className="text-2xl font-black leading-tight mb-2">{t('validatorDetail.staking_waitlist')}</h3>
                 <p className="text-sm text-gray-400 leading-relaxed mb-8">
-                  Notify me when <span className="text-white font-bold">{validator.name}</span> opens for delegation.
+                  {t('validatorDetail.notify_open', { name: validator.name })}
                 </p>
-                <button 
+                <button
                   onClick={() => setIsModalOpen(true)}
                   className="w-full h-14 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all active:scale-95 shadow-lg shadow-[#1D9E75]/20"
                 >
-                  JOIN WAITLIST
+                  {t('validatorDetail.join_waitlist')}
                 </button>
               </div>
             </section>
 
             <div className="p-8 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-[32px] space-y-4">
-               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">About this validator</h4>
+               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('validatorDetail.about_validator')}</h4>
                <p className="text-xs text-gray-500 leading-relaxed italic">
                  {validator.description}
                </p>
-               <a 
-                href={validator.website} 
-                target="_blank" 
+               <a
+                href={validator.website}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1D9E75] hover:underline min-h-[44px]"
                >
-                 Institutional Website <ExternalLink size={14} />
+                 {t('validatorDetail.institutional_website')} <ExternalLink size={14} />
                </a>
             </div>
           </aside>
@@ -482,16 +481,16 @@ export default function ValidatorClient() {
         <section className="mt-24 p-12 bg-[#E1F5EE] dark:bg-[#1D9E75]/5 border border-[#1D9E75]/20 rounded-[48px] text-center space-y-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#1D9E75] rounded-full blur-[120px] -mr-32 -mt-32 opacity-10" />
           <div className="relative z-10">
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight">Interested in staking with {validator.name}?</h2>
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight">{t('validatorDetail.cta_title', { name: validator.name })}</h2>
             <p className="text-gray-600 dark:text-[#1D9E75]/70 font-medium max-w-xl mx-auto">
-              Join the waitlist and be notified when delegation opens on Arc mainnet. Get early access to institutional rewards.
+              {t('validatorDetail.cta_desc')}
             </p>
             <div className="pt-4">
-              <button 
+              <button
                 onClick={() => setIsModalOpen(true)}
                 className="px-10 h-16 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all active:scale-95 shadow-xl shadow-[#1D9E75]/20 uppercase tracking-widest text-sm"
               >
-                Join Staking Waitlist
+                {t('validatorDetail.cta_btn')}
               </button>
             </div>
           </div>
@@ -503,7 +502,7 @@ export default function ValidatorClient() {
         <div className="fixed inset-0 z-[100] bg-white dark:bg-[#0F1117] md:bg-black/60 md:backdrop-blur-sm md:flex md:items-center md:justify-center animate-in fade-in duration-200">
           <div className="w-full h-full md:h-auto md:max-w-md md:rounded-[32px] md:border md:border-gray-100 md:dark:border-gray-800 md:shadow-2xl overflow-y-auto">
             <div className="px-8 py-6 flex items-center justify-between border-b border-gray-50 dark:border-gray-900 sticky top-0 bg-white dark:bg-[#0F1117] z-10">
-              <h2 className="text-xl font-black">Staking Notification</h2>
+              <h2 className="text-xl font-black">{t('validatorDetail.modal_title')}</h2>
               <button 
                 onClick={() => { setIsModalOpen(false); setSubmissionId(null); setSubmitError(null); }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
@@ -515,42 +514,42 @@ export default function ValidatorClient() {
             {submissionId ? (
               <div className="p-10 text-center space-y-6">
                  <CheckCircle2 className="mx-auto text-[#1D9E75]" size={48} />
-                 <h3 className="text-2xl font-black">✓ Noted.</h3>
+                 <h3 className="text-2xl font-black">✓ {t('validatorDetail.noted')}</h3>
                  <p className="text-gray-500 text-sm">
-                   Reference: <span className="font-mono font-bold">{submissionId}</span>. <br />
-                   You&apos;ll be notified when staking launches for this validator.
+                   {t('common.reference')}: <span className="font-mono font-bold">{submissionId}</span>. <br />
+                   {t('validatorDetail.noted_desc')}
                  </p>
-                 <button 
+                 <button
                   onClick={() => { setIsModalOpen(false); setSubmissionId(null); setSubmitError(null); }}
                   className="w-full h-14 bg-[#1D9E75] text-white font-black rounded-2xl"
                  >
-                   DONE
+                   {t('common.done')}
                  </button>
               </div>
             ) : (
               <form onSubmit={handleInterestSubmit} className="p-8 space-y-6">
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                    <Wallet size={12} /> Wallet Address
+                    <Wallet size={12} /> {t('validatorDetail.wallet_address')}
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="0x..."
                     className="w-full h-12 px-5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl outline-none focus:ring-2 focus:ring-[#1D9E75] font-mono text-xs font-bold"
                     value={isConnected ? address : customWallet}
                     onChange={e => !isConnected && setCustomWallet(e.target.value)}
                     disabled={isConnected}
                   />
-                  {isConnected && <p className="text-[10px] text-[#1D9E75] font-bold">✓ Connected wallet auto-filled</p>}
+                  {isConnected && <p className="text-[10px] text-[#1D9E75] font-bold">✓ {t('validatorDetail.wallet_autofilled')}</p>}
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                    <Mail size={12} /> Email Address
+                    <Mail size={12} /> {t('validatorDetail.email_address')}
                   </label>
-                  <input 
-                    type="email" 
-                    required 
+                  <input
+                    type="email"
+                    required
                     placeholder="you@example.com"
                     className="w-full h-12 px-5 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-2xl outline-none focus:ring-2 focus:ring-[#1D9E75] font-bold text-sm"
                     value={email}
@@ -569,7 +568,7 @@ export default function ValidatorClient() {
                   disabled={isSubmitting}
                   className="w-full h-14 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {isSubmitting ? <Loader2 className="animate-spin" /> : 'NOTIFY ME'}
+                  {isSubmitting ? <Loader2 className="animate-spin" /> : t('validatorDetail.notify_me')}
                 </button>
               </form>
             )}

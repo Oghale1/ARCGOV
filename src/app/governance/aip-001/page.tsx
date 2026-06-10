@@ -39,6 +39,7 @@ import {
   ARC_GOV_CORE_ABI
 } from '@/lib/contract';
 import { useToast } from '@/components/shared/Toast';
+import { useTranslation } from '@/lib/i18n';
 
 const YOUR_WALLET_ADDRESS = '0x196288da05b125e42Eb92bAB38F4ed7642dc8522'; // Placeholder
 
@@ -61,6 +62,7 @@ export default function AIP001Page() {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const { toast, dismiss } = useToast();
+  const { t } = useTranslation();
 
   const fullProposalText = `Title: AIP-001: Launch the tARC Community Token
 
@@ -146,7 +148,7 @@ Vote NO to reject this proposal.`;
   const executeVote = async () => {
     if (selectedVote === null || !walletClient || !publicClient || !proposal) return;
 
-    const toastId = toast("Casting your signal vote on Arc Testnet...", "loading");
+    const toastId = toast(t('proposal.casting_vote'), "loading");
     setIsVoting(true);
     setShowConfirmModal(false);
 
@@ -159,11 +161,11 @@ Vote NO to reject this proposal.`;
       );
       
       dismiss(toastId);
-      toast("Vote cast successfully!", "success");
+      toast(t('proposal.vote_success'), "success");
       fetchProposalData();
     } catch (err: any) {
       dismiss(toastId);
-      toast(err.message || "Failed to cast vote", "error");
+      toast(err.message || t('proposal.vote_failed'), "error");
     } finally {
       setIsVoting(false);
     }
@@ -195,8 +197,8 @@ Vote NO to reject this proposal.`;
   };
 
   const handleShare = () => {
-    const text = `ArcGov's first governance proposal is live. AIP-001: Launch the tARC community token. Vote now at arcgov.vercel.app/governance/aip-001 @.adal\\skills\\use-arc @.adal\\skills\\use-circle-wallets #ArcGov #ArcGovernance`;
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+    const text = `ArcGov's first governance proposal is live. AIP-001: Launch the tARC community token. Vote now at arcgov.vercel.app/governance/aip-001 #ArcGov #ArcGovernance`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   };
 
   const totalVotes = proposal ? Number(proposal.forVotes) + Number(proposal.againstVotes) + Number(proposal.abstainVotes) : 0;
@@ -209,7 +211,7 @@ Vote NO to reject this proposal.`;
       <main className="flex-grow max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         {/* SECTION 1 — HEADER */}
         <nav className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-10">
-          <Link href="/governance" className="hover:text-[#1D9E75] transition-colors">Governance</Link>
+          <Link href="/governance" className="hover:text-[#1D9E75] transition-colors">{t('nav.governance')}</Link>
           <ChevronRight size={12} />
           <span className="text-gray-900 dark:text-white">AIP-001</span>
         </nav>
@@ -227,7 +229,7 @@ Vote NO to reject this proposal.`;
               Signal Vote Active
             </div>
             <span className="text-xs text-gray-500 flex items-center gap-1.5">
-              <User size={14} /> Proposed by 
+              <User size={14} /> {t('proposal.proposed_by')}
               <span className="font-mono font-bold text-[#1D9E75]">{YOUR_WALLET_ADDRESS.slice(0, 6)}...{YOUR_WALLET_ADDRESS.slice(-4)}</span>
             </span>
             <span className="text-xs text-gray-500 flex items-center gap-1.5">
@@ -278,27 +280,27 @@ Vote NO to reject this proposal.`;
                    {userVoteStatus ? (
                      <div className="md:col-span-3 p-6 bg-green-500/10 border border-green-500/30 rounded-2xl text-center space-y-2">
                         <CheckCircle2 className="mx-auto text-green-500" size={32} />
-                        <p className="text-sm font-black text-green-500">YOU HAVE VOTED</p>
+                        <p className="text-sm font-black text-green-500">{t('proposal.you_have_voted')}</p>
                      </div>
                    ) : (
                      <>
-                      <button 
+                      <button
                         onClick={() => handleVoteClick(0)}
                         className="py-4 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all"
                       >
-                        ✓ Vote FOR
+                        ✓ {t('proposal.vote_for')}
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleVoteClick(1)}
                         className="py-4 bg-red-500 text-white font-black rounded-2xl hover:bg-red-600 transition-all"
                       >
-                        ✗ Vote AGAINST
+                        ✗ {t('proposal.vote_against')}
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleVoteClick(2)}
                         className="py-4 bg-gray-100 dark:bg-gray-800 text-gray-500 font-black rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
                       >
-                        — ABSTAIN
+                        — {t('proposal.abstain')}
                       </button>
                      </>
                    )}
@@ -404,8 +406,8 @@ Vote NO to reject this proposal.`;
                       <MessageSquare size={20} />
                     </div>
                     <div className="text-left">
-                       <span className="block text-sm font-black uppercase tracking-widest">AI Summary</span>
-                       <span className="block text-[10px] font-bold text-gray-400">Powered by Llama 3.3 · Groq</span>
+                       <span className="block text-sm font-black uppercase tracking-widest">{t('proposal.ai_assistant')}</span>
+                       <span className="block text-[10px] font-bold text-gray-400">{t('proposal.ai_powered')}</span>
                     </div>
                   </div>
                   {isSummaryExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -433,15 +435,15 @@ Vote NO to reject this proposal.`;
             <section className="p-8 bg-[#0F1117] text-white rounded-[40px] space-y-6 shadow-2xl relative overflow-hidden">
                <div className="absolute top-0 right-0 w-32 h-32 bg-[#1DA1F2] rounded-full blur-[80px] -mr-16 -mt-16 opacity-20" />
                <div className="relative z-10 space-y-6">
-                  <h3 className="text-xl font-black">Community Signal</h3>
+                  <h3 className="text-xl font-black">{t('proposal.share_proposal')}</h3>
                   <p className="text-sm text-gray-400 leading-relaxed">
-                    Help spread the word. Signal votes show Circle the strength of the ArcGov community.
+                    {t('proposal.share_desc')}
                   </p>
-                  <button 
+                  <button
                     onClick={handleShare}
                     className="w-full py-4 bg-[#1DA1F2] text-white font-black rounded-2xl hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#1DA1F2]/20"
                   >
-                    <Share2 size={20} /> SHARE ON X
+                    <Share2 size={20} /> {t('proposal.share_on_x')}
                   </button>
                </div>
             </section>
@@ -480,26 +482,26 @@ Vote NO to reject this proposal.`;
       {showConfirmModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-[#0F1117] w-full max-w-md p-8 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-2xl scale-in-center">
-            <h3 className="text-2xl font-black mb-4">Confirm Signal Vote</h3>
+            <h3 className="text-2xl font-black mb-4">{t('proposal.confirm_vote')}</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed text-sm">
-              You are casting a <span className={`font-black ${selectedVote === 0 ? 'text-[#1D9E75]' : selectedVote === 1 ? 'text-red-500' : 'text-gray-400'}`}>
-                {selectedVote === 0 ? 'FOR' : selectedVote === 1 ? 'AGAINST' : 'ABSTAIN'}
-              </span> signal on AIP-001. 
+              {t('proposal.confirm_text_1')} <span className={`font-black ${selectedVote === 0 ? 'text-[#1D9E75]' : selectedVote === 1 ? 'text-red-500' : 'text-gray-400'}`}>
+                {selectedVote === 0 ? t('common.for') : selectedVote === 1 ? t('common.against') : t('common.abstain')}
+              </span> {t('proposal.confirm_text_2')}AIP-001.
               <br /><br />
-              This records your preference on the Arc Testnet. <span className="text-gray-900 dark:text-white font-bold">Gas fees apply.</span>
+              {t('proposal.confirm_permanent')}
             </p>
             <div className="flex gap-4">
-              <button 
+              <button
                 onClick={() => setShowConfirmModal(false)}
                 className="flex-1 py-4 border-2 border-gray-100 dark:border-gray-800 font-black rounded-2xl hover:bg-gray-50 transition-all text-sm"
               >
-                CANCEL
+                {t('common.cancel')}
               </button>
-              <button 
+              <button
                 onClick={executeVote}
                 className="flex-1 py-4 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all text-sm"
               >
-                CONFIRM
+                {t('proposal.confirm_vote_btn')}
               </button>
             </div>
           </div>
