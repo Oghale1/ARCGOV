@@ -18,12 +18,27 @@ export function useTranslation() {
     }
   }, []);
 
-  const t = useCallback((key: string): string => {
+  const t = useCallback((key: string, vars?: Record<string, string | number>): string => {
     const keys = key.split('.');
     let value: any = messages[lang];
 
     for (const k of keys) {
       value = value?.[k];
+    }
+
+    // Fall back to English, then to the raw key, so a missing translation never
+    // renders a blank — it shows the English copy instead.
+    if (value == null) {
+      let fallback: any = messages.en;
+      for (const k of keys) fallback = fallback?.[k];
+      value = fallback ?? key;
+    }
+
+    // Interpolate {placeholder} tokens, e.g. t('x.y', { name: 'BlackRock' }).
+    if (typeof value === 'string' && vars) {
+      return value.replace(/\{(\w+)\}/g, (_, name) =>
+        vars[name] != null ? String(vars[name]) : `{${name}}`
+      );
     }
 
     return value ?? key;

@@ -41,6 +41,7 @@ import {
 import { getBlockNumberFormatted } from '@/lib/arc-rpc';
 import { isVotingActive, getVotingStart, getEffectiveDeadline } from '@/lib/proposal-status';
 import { useToast } from '@/components/shared/Toast';
+import { useTranslation } from '@/lib/i18n';
 import supabase from '@/lib/supabase';
 
 // Components
@@ -86,6 +87,7 @@ export default function ProposalClient() {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const { toast, dismiss } = useToast();
+  const { t } = useTranslation();
 
   const fetchProposalData = React.useCallback(async () => {
     setIsLoading(true);
@@ -116,11 +118,11 @@ export default function ProposalClient() {
           setUserVoteStatus(voted);
         }
       } else {
-        setError("Proposal not found");
+        setError(t('proposal.not_found'));
       }
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch proposal details");
+      setError(t('proposal.fetch_failed'));
     } finally {
       setIsLoading(false);
     }
@@ -143,7 +145,7 @@ export default function ProposalClient() {
   const executeVote = async () => {
     if (selectedVote === null || !walletClient || !publicClient || !proposal) return;
 
-    const toastId = toast("Casting your vote on Arc Testnet...", "loading");
+    const toastId = toast(t('proposal.casting_vote'), "loading");
     setIsVoting(true);
     setShowConfirmModal(false);
 
@@ -156,11 +158,11 @@ export default function ProposalClient() {
       );
       
       dismiss(toastId);
-      toast("Vote cast successfully!", "success");
+      toast(t('proposal.vote_success'), "success");
       fetchProposalData();
     } catch (err: any) {
       dismiss(toastId);
-      toast(err.message || "Failed to cast vote", "error");
+      toast(err.message || t('proposal.vote_failed'), "error");
     } finally {
       setIsVoting(false);
     }
@@ -247,7 +249,7 @@ export default function ProposalClient() {
       <main className="flex-grow max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         <Link href="/governance" className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-[#1D9E75] transition-all mb-10 group">
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-          Back to Governance
+          {t('proposal.back')}
         </Link>
 
         {isLoading ? (
@@ -274,11 +276,11 @@ export default function ProposalClient() {
                 </span>
                 {proposalView && <ProposalStatusBadge proposal={proposalView} />}
                 <span className="text-xs text-gray-500 flex items-center gap-1.5">
-                  <User size={14} /> Proposed by {proposal.proposer.slice(0, 6)}...{proposal.proposer.slice(-4)}
+                  <User size={14} /> {t('proposal.proposed_by')} {proposal.proposer.slice(0, 6)}...{proposal.proposer.slice(-4)}
                 </span>
                 {votingStart && votingEnd && (
                   <span className="text-xs text-gray-500 flex items-center gap-1.5">
-                    <Clock size={14} /> Voting {votingStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – {votingEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    <Clock size={14} /> {t('proposal.voting')} {votingStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – {votingEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 )}
               </div>
@@ -288,7 +290,7 @@ export default function ProposalClient() {
               <div className="lg:col-span-2 space-y-12">
                 {/* PROPOSAL BODY */}
                 <div className="bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-[40px] p-8 md:p-12 shadow-sm">
-                   <h2 className="text-2xl font-black mb-8">Description</h2>
+                   <h2 className="text-2xl font-black mb-8">{t('proposal.description')}</h2>
                    <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap">
                       {proposal.description}
                    </div>
@@ -311,8 +313,8 @@ export default function ProposalClient() {
                           <MessageSquare size={20} />
                         </div>
                         <div className="text-left">
-                           <span className="block text-sm font-black uppercase tracking-widest">ArcGov AI Assistant</span>
-                           <span className="block text-[10px] font-bold text-gray-400">Powered by Llama 3.3 · Groq</span>
+                           <span className="block text-sm font-black uppercase tracking-widest">{t('proposal.ai_assistant')}</span>
+                           <span className="block text-[10px] font-bold text-gray-400">{t('proposal.ai_powered')}</span>
                         </div>
                       </div>
                       {isSummaryExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -322,7 +324,7 @@ export default function ProposalClient() {
                       <div className="bg-white dark:bg-[#0F1117] border-t border-gray-100 dark:border-gray-800 animate-in slide-in-from-top-2 duration-300">
                         <div className="p-6 max-h-[400px] overflow-y-auto space-y-4">
                            {messages.length === 0 && !isSummarizing && (
-                              <p className="text-sm text-gray-500 italic text-center py-4">Click to generate a summary or ask a question.</p>
+                              <p className="text-sm text-gray-500 italic text-center py-4">{t('proposal.ai_prompt')}</p>
                            )}
                            {messages.map((m, i) => (
                              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -339,7 +341,7 @@ export default function ProposalClient() {
                               <div className="flex justify-start">
                                  <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-2xl rounded-tl-none border border-gray-100 dark:border-gray-800 flex items-center gap-3">
                                     <Loader2 className="animate-spin text-[#1D9E75]" size={16} />
-                                    <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Thinking...</span>
+                                    <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">{t('proposal.ai_thinking')}</span>
                                  </div>
                               </div>
                            )}
@@ -348,7 +350,7 @@ export default function ProposalClient() {
                         <form onSubmit={(e) => handleSendMessage(e)} className="p-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-800 flex gap-2">
                            <input 
                               type="text"
-                              placeholder="Ask a question about this proposal..."
+                              placeholder={t('proposal.ai_input_placeholder')}
                               className="flex-grow h-12 px-4 bg-white dark:bg-[#0F1117] border border-gray-200 dark:border-gray-800 rounded-xl outline-none focus:ring-2 focus:ring-[#1D9E75] transition-all text-sm"
                               value={input}
                               onChange={e => setInput(e.target.value)}
@@ -371,9 +373,9 @@ export default function ProposalClient() {
                 {/* VOTE TALLY CARD */}
                 <div className="bg-gray-50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-[40px] p-8 space-y-8">
                   <div className="space-y-1">
-                    <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">Vote Tally</h3>
+                    <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">{t('proposal.vote_tally')}</h3>
                     <p className="text-xs font-bold text-gray-500">
-                      {totalVotes === 0 ? <>0 <TestnetChip /></> : totalVotes.toString()} Total Votes Cast
+                      {totalVotes === 0 ? <>0 <TestnetChip /></> : totalVotes.toString()} {t('proposal.total_votes_cast')}
                     </p>
                   </div>
 
@@ -403,7 +405,7 @@ export default function ProposalClient() {
                       {userVoteStatus ? (
                          <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl flex items-center gap-3 text-green-600">
                             <CheckCircle2 size={20} />
-                            <span className="text-xs font-black uppercase tracking-widest">You have voted</span>
+                            <span className="text-xs font-black uppercase tracking-widest">{t('proposal.you_have_voted')}</span>
                          </div>
                       ) : (
                         <>
@@ -412,23 +414,23 @@ export default function ProposalClient() {
                               onClick={() => handleVoteClick(0)}
                               className="w-full py-4 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all h-14"
                             >
-                              ✓ Vote FOR
+                              ✓ {t('proposal.vote_for')}
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleVoteClick(1)}
                               className="w-full py-4 border-2 border-red-100 text-red-500 font-black rounded-2xl hover:bg-red-50 transition-all h-14"
                             >
-                              ✗ Vote AGAINST
+                              ✗ {t('proposal.vote_against')}
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleVoteClick(2)}
                               className="w-full py-4 text-gray-400 font-bold rounded-2xl hover:bg-gray-100 transition-all h-14"
                             >
-                              ABSTAIN
+                              {t('proposal.abstain')}
                             </button>
                           </div>
                           <p className="text-[10px] text-gray-400 text-center font-bold italic">
-                            Transaction will be submitted to Arc Testnet
+                            {t('proposal.tx_submitted')}
                           </p>
                         </>
                       )}
@@ -440,15 +442,15 @@ export default function ProposalClient() {
                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#1D9E75] rounded-full blur-[80px] -mr-16 -mt-16 opacity-20" />
                    <div className="relative z-10 space-y-4">
                       <Zap className="text-[#1D9E75]" size={32} />
-                      <h3 className="text-xl font-black">Share Proposal</h3>
+                      <h3 className="text-xl font-black">{t('proposal.share_proposal')}</h3>
                       <p className="text-xs text-gray-400 leading-relaxed">
-                         Help shape the network by inviting other community members to vote on this proposal.
+                         {t('proposal.share_desc')}
                       </p>
                       <button
                          onClick={handleShare}
                          className="w-full py-4 bg-white/10 hover:bg-white/20 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 h-14"
                       >
-                         <Share2 size={18} /> SHARE ON X
+                         <Share2 size={18} /> {t('proposal.share_on_x')}
                       </button>
                    </div>
                 </div>
@@ -473,26 +475,26 @@ export default function ProposalClient() {
       {showConfirmModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-[#0F1117] w-full max-w-md p-8 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-2xl scale-in-center">
-            <h3 className="text-2xl font-black mb-4">Confirm Your Vote</h3>
+            <h3 className="text-2xl font-black mb-4">{t('proposal.confirm_vote')}</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed text-sm">
-              You are casting a <span className={`font-black ${selectedVote === 0 ? 'text-[#1D9E75]' : selectedVote === 1 ? 'text-red-500' : 'text-gray-400'}`}>
-                {selectedVote === 0 ? 'FOR' : selectedVote === 1 ? 'AGAINST' : 'ABSTAIN'}
-              </span> vote for Proposal #{id}. 
+              {t('proposal.confirm_text_1')} <span className={`font-black ${selectedVote === 0 ? 'text-[#1D9E75]' : selectedVote === 1 ? 'text-red-500' : 'text-gray-400'}`}>
+                {selectedVote === 0 ? t('common.for') : selectedVote === 1 ? t('common.against') : t('common.abstain')}
+              </span> {t('proposal.confirm_text_2')}{id}.
               <br /><br />
-              This action is permanent and will be recorded on the Arc Testnet.
+              {t('proposal.confirm_permanent')}
             </p>
             <div className="flex gap-4">
-              <button 
+              <button
                 onClick={() => setShowConfirmModal(false)}
                 className="flex-1 py-4 border-2 border-gray-100 dark:border-gray-800 font-black rounded-2xl hover:bg-gray-50 transition-all text-sm h-14"
               >
-                CANCEL
+                {t('common.cancel')}
               </button>
-              <button 
+              <button
                 onClick={executeVote}
                 className="flex-1 py-4 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all text-sm h-14"
               >
-                CONFIRM VOTE
+                {t('proposal.confirm_vote_btn')}
               </button>
             </div>
           </div>

@@ -23,9 +23,11 @@ import Link from 'next/link';
 import architectsData from '@/data/architects.json';
 import { submitForm } from '@/lib/submit';
 import { useToast } from '@/components/shared/Toast';
+import { useTranslation } from '@/lib/i18n';
 
 export default function Architects() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const architects = architectsData as any[];
 
   // --- FORM STATE ---
@@ -74,12 +76,12 @@ export default function Architects() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.xHandle || !formData.description) {
-      toast("Please fill in all required fields", "error");
+      toast(t('architects.fill_required'), "error");
       return;
     }
 
     if (formData.appLink && !formData.appLink.startsWith('https://')) {
-      toast("App Link must start with https://", "error");
+      toast(t('architects.https_required'), "error");
       return;
     }
 
@@ -93,14 +95,14 @@ export default function Architects() {
     });
     if (ok) {
       setSubmissionId(ref || 'SUCCESS');
-      toast("Application submitted successfully!", "success");
+      toast(t('architects.app_success'), "success");
       // Optimistically show it in the list right away.
       setSubmittedProjects((prev) => [
         { id: ref || `local-${Date.now()}`, name: formData.name, x_handle: formattedXHandle, app_link: formData.appLink, description: formData.description },
         ...prev,
       ]);
     } else {
-      toast(error || "Submission failed. Please try again.", "error");
+      toast(error || t('architects.submit_failed'), "error");
     }
     setIsSubmitting(false);
   };
@@ -116,35 +118,35 @@ export default function Architects() {
         {/* SECTION 1 — HERO */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1D9E75]/10 text-[#1D9E75] text-[10px] font-black tracking-widest mb-6 border border-[#1D9E75]/20 uppercase">
-            <Hammer size={12} /> Architects Program
+            <Hammer size={12} /> {t('architects.program')}
           </div>
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-[0.9]">
-            ARC <span className="text-[#1D9E75]">ARCHITECTS</span>
+            {t('architects.hero_1')} <span className="text-[#1D9E75]">{t('architects.hero_2')}</span>
           </h1>
           <p className="max-w-2xl mx-auto text-lg text-gray-500 dark:text-gray-400 font-medium mb-10">
-            Community builders shaping the Arc ecosystem. Building the future of institutional finance, one block at a time.
+            {t('architects.hero_sub')}
           </p>
-          <a 
-            href="https://community.arc.network" 
-            target="_blank" 
+          <a
+            href="https://community.arc.network"
+            target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-8 py-4 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all active:scale-95 shadow-lg shadow-[#1D9E75]/20"
           >
-            Join the official program <ArrowUpRight size={20} />
+            {t('architects.join_official')} <ArrowUpRight size={20} />
           </a>
         </section>
 
         {/* SECTION 2 — WHAT IS IT */}
         <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
           <div className="p-10 md:p-12 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-[48px] space-y-8">
-            <h2 className="text-3xl font-black tracking-tight text-center md:text-left">Building the Future</h2>
+            <h2 className="text-3xl font-black tracking-tight text-center md:text-left">{t('architects.building_future')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-3 text-center md:text-left">
                 <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center mx-auto md:mx-0">
                    <Code2 size={20} />
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                  The Arc Architects Program is an initiative led by Circle and community partners to support developers building on the Arc blockchain.
+                  {t('architects.feature_1')}
                 </p>
               </div>
               <div className="space-y-3 text-center md:text-left">
@@ -152,7 +154,7 @@ export default function Architects() {
                    <Trophy size={20} />
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Builders gain global recognition, direct connections to institutional partners, and rewards for contributing to core infrastructure.
+                  {t('architects.feature_2')}
                 </p>
               </div>
               <div className="space-y-3 text-center md:text-left">
@@ -160,7 +162,7 @@ export default function Architects() {
                    <Zap size={20} />
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Building on Arc means contributing to the infrastructure layer of institutional stablecoin finance. ArcGov welcomes builders who are creating real tools for the Arc ecosystem.
+                  {t('architects.feature_3')}
                 </p>
               </div>
             </div>
@@ -169,7 +171,7 @@ export default function Architects() {
 
         {/* SECTION 3 — FEATURED BUILDS */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
-           <h2 className="text-3xl font-black mb-10 text-center">Featured Arc Builders</h2>
+           <h2 className="text-3xl font-black mb-10 text-center">{t('architects.featured_builders')}</h2>
            {featuredProjects.length > 0 ? (
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {featuredProjects.map((arc) => (
@@ -194,7 +196,7 @@ export default function Architects() {
                      </p>
                      <div className="flex flex-col gap-4 mt-auto pt-6 border-t border-gray-50 dark:border-gray-900">
                         <div className="flex items-center justify-between">
-                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">By {arc.builder}</span>
+                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('architects.by')} {arc.builder}</span>
                            <div className="flex items-center gap-2">
                              {arc.appLink && (
                                <a
@@ -203,7 +205,7 @@ export default function Architects() {
                                  rel="noopener noreferrer"
                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1D9E75]/10 text-[#1D9E75] rounded-lg text-[10px] font-black uppercase hover:bg-[#1D9E75] hover:text-white transition-all"
                                >
-                                 <Globe size={12} /> Visit App
+                                 <Globe size={12} /> {t('architects.visit_app')}
                                </a>
                              )}
                            </div>
@@ -218,14 +220,14 @@ export default function Architects() {
                    <Code2 className="text-gray-300" size={32} />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xl font-bold text-gray-500">No featured builders yet.</p>
-                  <p className="text-gray-400 max-w-xs mx-auto">Be the first to apply and build something on Arc.</p>
+                  <p className="text-xl font-bold text-gray-500">{t('architects.no_builders_title')}</p>
+                  <p className="text-gray-400 max-w-xs mx-auto">{t('architects.no_builders_desc')}</p>
                 </div>
-                <button 
+                <button
                   onClick={scrollToForm}
                   className="px-8 py-3 bg-[#1D9E75] text-white text-xs font-black uppercase rounded-xl hover:bg-[#0F6E56] transition-all"
                 >
-                  Apply Now
+                  {t('architects.apply_now')}
                 </button>
              </div>
            )}
@@ -234,8 +236,8 @@ export default function Architects() {
         {/* SECTION 4 — LEADERBOARD TABLE */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
            <div className="text-center mb-10">
-              <h2 className="text-3xl font-black mb-2">Community Leaderboard</h2>
-              <p className="text-sm text-gray-500">Leaderboard updates as builders contribute to the Arc network.</p>
+              <h2 className="text-3xl font-black mb-2">{t('architects.leaderboard')}</h2>
+              <p className="text-sm text-gray-500">{t('architects.leaderboard_desc')}</p>
            </div>
 
            {architects.length > 0 ? (
@@ -245,11 +247,11 @@ export default function Architects() {
                   <table className="w-full text-left border-collapse">
                      <thead>
                         <tr className="bg-gray-50/50 dark:bg-gray-900/30 border-b border-gray-100 dark:border-gray-800">
-                           <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Rank</th>
-                           <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Builder</th>
-                           <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Projects</th>
-                           <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Proposals</th>
-                           <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Votes</th>
+                           <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('architects.col_rank')}</th>
+                           <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('architects.col_builder')}</th>
+                           <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">{t('architects.col_projects')}</th>
+                           <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">{t('architects.col_proposals')}</th>
+                           <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">{t('architects.col_votes')}</th>
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
@@ -286,9 +288,9 @@ export default function Architects() {
                        </div>
                        <div className="grid grid-cols-3 gap-2">
                           {[
-                            { label: 'Projects', val: arc.projectsBuilt },
-                            { label: 'Proposals', val: arc.proposalsSubmitted },
-                            { label: 'Votes', val: arc.votesCast },
+                            { label: t('architects.col_projects'), val: arc.projectsBuilt },
+                            { label: t('architects.col_proposals'), val: arc.proposalsSubmitted },
+                            { label: t('architects.col_votes'), val: arc.votesCast },
                           ].map((stat) => (
                             <div key={stat.label} className="flex flex-col items-center py-3 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
                                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{stat.label}</span>
@@ -303,8 +305,8 @@ export default function Architects() {
            ) : (
              <div className="p-16 text-center bg-gray-50/50 dark:bg-gray-900/20 rounded-[40px] border-2 border-dashed border-gray-100 dark:border-gray-800 space-y-4">
                 <ClipboardList className="mx-auto text-gray-300" size={40} />
-                <p className="font-bold text-gray-500">Leaderboard empty — waiting for the first Arc builders.</p>
-                <p className="text-sm text-gray-400">Submit your project to be featured.</p>
+                <p className="font-bold text-gray-500">{t('architects.leaderboard_empty')}</p>
+                <p className="text-sm text-gray-400">{t('architects.leaderboard_empty_desc')}</p>
              </div>
            )}
         </section>
@@ -315,42 +317,42 @@ export default function Architects() {
               <div className="absolute top-0 left-0 w-64 h-64 bg-[#1D9E75] rounded-full blur-[120px] -mr-32 -mt-32 opacity-20" />
               
               <div className="relative z-10 text-center space-y-4">
-                 <h2 className="text-4xl font-black tracking-tight">Apply to be featured</h2>
+                 <h2 className="text-4xl font-black tracking-tight">{t('architects.apply_title')}</h2>
                  <p className="text-gray-400 text-sm max-w-sm mx-auto leading-relaxed">
-                   Are you building on Arc? Join the directory and showcase your project to the community.
+                   {t('architects.apply_desc')}
                  </p>
               </div>
 
               {submissionId ? (
                 <div className="relative z-10 p-8 bg-white/5 border border-white/10 rounded-3xl text-center animate-in zoom-in duration-300">
                    <CheckCircle2 size={48} className="text-[#1D9E75] mx-auto mb-4" />
-                   <h4 className="text-xl font-bold mb-2">Application Submitted</h4>
+                   <h4 className="text-xl font-bold mb-2">{t('architects.app_submitted')}</h4>
                    <p className="text-xs text-gray-500 leading-relaxed max-w-xs mx-auto mb-6">
-                     Reference: <span className="font-mono text-[#1D9E75]">{submissionId}</span>. We review applications weekly.
+                     {t('common.reference')}: <span className="font-mono text-[#1D9E75]">{submissionId}</span>. {t('architects.app_submitted_desc')}
                    </p>
-                   <button 
+                   <button
                     onClick={() => setSubmissionId(null)}
                     className="px-8 h-12 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all"
                    >
-                     SUBMIT ANOTHER
+                     {t('architects.submit_another')}
                    </button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="relative z-10 space-y-6">
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-gray-400">Builder Name</label>
-                        <input 
-                          type="text" 
-                          required 
-                          placeholder="Your Name"
+                        <label className="text-xs font-black uppercase tracking-widest text-gray-400">{t('architects.builder_name')}</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder={t('architects.your_name')}
                           className="w-full px-5 h-12 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-[#1D9E75] transition-all text-sm font-medium"
                           value={formData.name}
                           onChange={(e) => setFormData({...formData, name: e.target.value})}
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-gray-400">X (Twitter) Handle</label>
+                        <label className="text-xs font-black uppercase tracking-widest text-gray-400">{t('architects.x_handle')}</label>
                         <input 
                           type="text" 
                           required 
@@ -363,7 +365,7 @@ export default function Architects() {
                    </div>
 
                    <div className="space-y-2">
-                      <label className="text-xs font-black uppercase tracking-widest text-gray-400">Live App URL (optional)</label>
+                      <label className="text-xs font-black uppercase tracking-widest text-gray-400">{t('architects.app_url')}</label>
                       <input
                         type="url"
                         placeholder="https://yourapp.vercel.app"
@@ -374,11 +376,11 @@ export default function Architects() {
                    </div>
 
                    <div className="space-y-2">
-                      <label className="text-xs font-black uppercase tracking-widest text-gray-400">What are you building?</label>
-                      <textarea 
-                        required 
+                      <label className="text-xs font-black uppercase tracking-widest text-gray-400">{t('architects.what_building')}</label>
+                      <textarea
+                        required
                         rows={4}
-                        placeholder="Briefly describe your project or contribution to the Arc ecosystem..."
+                        placeholder={t('architects.building_placeholder')}
                         className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-[#1D9E75] transition-all text-sm font-medium resize-none"
                         value={formData.description}
                         onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -390,7 +392,7 @@ export default function Architects() {
                     disabled={isSubmitting}
                     className="w-full h-14 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all shadow-lg shadow-[#1D9E75]/20 flex items-center justify-center gap-2"
                    >
-                     {isSubmitting ? <Loader2 className="animate-spin" /> : 'SUBMIT APPLICATION'}
+                     {isSubmitting ? <Loader2 className="animate-spin" /> : t('architects.submit_application')}
                    </button>
                 </form>
               )}

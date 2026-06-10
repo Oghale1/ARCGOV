@@ -180,15 +180,15 @@ export default function Home() {
           ) : (
             <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
               <span className={`flex items-center gap-1.5 whitespace-nowrap transition-opacity duration-500 ${isRefreshing ? 'opacity-50' : 'opacity-100'}`}>
-                Block <span className={`text-gray-900 dark:text-white ${isRefreshing ? 'animate-pulse' : ''}`}>
+                {t('common.block')} <span className={`text-gray-900 dark:text-white ${isRefreshing ? 'animate-pulse' : ''}`}>
                   {fetchStatus === 'error' ? `~${lastKnownBlock}` : `#${networkStats?.blockNumber}`}
                 </span>
               </span>
               <span className="flex items-center gap-1.5 whitespace-nowrap">
-                Finality <span className="text-gray-900 dark:text-white">{networkStats?.finality}</span>
+                {t('common.finality')} <span className="text-gray-900 dark:text-white">{networkStats?.finality}</span>
               </span>
               <span className="flex items-center gap-1.5 whitespace-nowrap">
-                Validators <span className="text-gray-900 dark:text-white">{networkStats?.totalValidators}</span>
+                {t('common.validators')} <span className="text-gray-900 dark:text-white">{networkStats?.totalValidators}</span>
               </span>
             </div>
           )}
@@ -231,29 +231,29 @@ export default function Home() {
         {/* SECTION 3 — STAT CARDS */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard 
-              label={t('home.total_staked')} 
-              value={<>0 USDC <TestnetChip /></>} 
-              subtext="Testnet • Live at mainnet" 
-              isLoading={isLoading} 
+            <StatCard
+              label={t('home.total_staked')}
+              value={<>0 USDC <TestnetChip /></>}
+              subtext={t('home.testnet_live')}
+              isLoading={isLoading}
             />
-            <StatCard 
-              label={t('home.active_validators')} 
-              value="8" 
-              subtext="Proof of Authority" 
-              isLoading={isLoading} 
+            <StatCard
+              label={t('home.active_validators')}
+              value="8"
+              subtext={t('home.proof_of_authority')}
+              isLoading={isLoading}
             />
-            <StatCard 
-              label={t('home.open_proposals')} 
-              value={openProposals.length.toString()} 
-              subtext="Community Driven" 
-              isLoading={isLoading} 
+            <StatCard
+              label={t('home.open_proposals')}
+              value={openProposals.length.toString()}
+              subtext={t('home.community_driven')}
+              isLoading={isLoading}
             />
-            <StatCard 
-              label={t('home.governance_health')} 
-              value={healthMetrics.score.toString()} 
-              subtext={healthMetrics.hasProposals ? "Live Network Health" : "Testnet baseline"} 
-              isLoading={isLoading} 
+            <StatCard
+              label={t('home.governance_health')}
+              value={healthMetrics.score.toString()}
+              subtext={healthMetrics.hasProposals ? t('home.live_network_health') : t('home.testnet_baseline')}
+              isLoading={isLoading}
             />
           </div>
         </section>
@@ -286,7 +286,7 @@ export default function Home() {
                   </div>
                   <div className="relative z-10 flex flex-col items-center justify-center">
                     <span className="text-5xl font-black" style={{ color: healthMetrics.color }}>{healthMetrics.score}</span>
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Score</span>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t('home.score')}</span>
                   </div>
                 </>
               ) : (
@@ -297,20 +297,20 @@ export default function Home() {
             </div>
             <h3 className="text-xl font-bold mb-2">{t('home.governance_health')}</h3>
             <p className="text-xs text-gray-500 mb-6 max-w-[200px]">
-              Calculated from validator uptime, quantum readiness, and community participation
+              {t('home.health_desc')}
             </p>
             <div className="flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-[#0F1117] rounded-full border border-gray-100 dark:border-gray-800 shadow-sm">
                <span className="w-1.5 h-1.5 rounded-full bg-[#1D9E75]" />
-               <span className="text-[10px] font-bold text-gray-400">Updates with live on-chain data</span>
+               <span className="text-[10px] font-bold text-gray-400">{t('home.updates_live')}</span>
             </div>
           </div>
 
           {/* SECTION 5 — ACTIVE PROPOSALS */}
           <div className="lg:col-span-2 space-y-8">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-black tracking-tight">Active Proposals</h2>
+              <h2 className="text-2xl font-black tracking-tight">{t('home.active_proposals')}</h2>
               <Link href="/governance" className="text-sm font-bold text-[#1D9E75] hover:underline flex items-center gap-1">
-                View All Proposals <ChevronRight size={16} />
+                {t('home.view_all_proposals')} <ChevronRight size={16} />
               </Link>
             </div>
 
@@ -349,11 +349,11 @@ export default function Home() {
                             <div className="flex items-center gap-4">
                                <div className="flex items-center gap-1.5">
                                   <div className="w-1.5 h-1.5 rounded-full bg-[#1D9E75]" />
-                                  <span className="text-[10px] font-black uppercase text-[#1D9E75]">{Number(p.forVotes)} For</span>
+                                  <span className="text-[10px] font-black uppercase text-[#1D9E75]">{Number(p.forVotes)} {t('common.for')}</span>
                                </div>
                                <div className="flex items-center gap-1.5">
                                   <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                  <span className="text-[10px] font-black uppercase text-red-500">{Number(p.againstVotes)} Against</span>
+                                  <span className="text-[10px] font-black uppercase text-red-500">{Number(p.againstVotes)} {t('common.against')}</span>
                                </div>
                             </div>
                             <ChevronRight size={18} className="text-gray-300 group-hover:text-[#1D9E75] transition-all" />
@@ -365,7 +365,7 @@ export default function Home() {
               </div>
             ) : (
               <div className="bg-gray-50/50 dark:bg-gray-900/20 rounded-2xl border-2 border-dashed border-gray-100 dark:border-gray-800 p-12 text-center">
-                 <p className="text-gray-400 text-sm font-bold">No active proposals</p>
+                 <p className="text-gray-400 text-sm font-bold">{t('home.no_active_proposals')}</p>
               </div>
             )}
           </div>
@@ -374,10 +374,10 @@ export default function Home() {
         {/* SECTION 6 — ACTIVITY FEED */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-black tracking-tight">Recent Activity</h2>
+              <h2 className="text-2xl font-black tracking-tight">{t('home.recent_activity')}</h2>
               <div className="flex items-center gap-1.5 px-3 py-1 bg-[#1D9E75]/10 rounded-full border border-[#1D9E75]/20">
                  <div className="w-1.5 h-1.5 rounded-full bg-[#1D9E75] animate-pulse" />
-                 <span className="text-[10px] font-black text-[#1D9E75] uppercase tracking-widest">Live Feed</span>
+                 <span className="text-[10px] font-black text-[#1D9E75] uppercase tracking-widest">{t('home.live_feed')}</span>
               </div>
            </div>
            <RecentProposals proposals={proposalsWithMetadata} isLoading={isLoading} />
@@ -402,22 +402,21 @@ export default function Home() {
                  <div className="space-y-8">
                     <div className="space-y-4">
                        <h2 className="text-4xl md:text-5xl font-black text-white leading-tight tracking-tight">
-                          Shape the future of <br />
-                          Institutional Finance.
+                          {t('home.cta_title')}
                        </h2>
                        <p className="text-gray-400 text-lg font-medium leading-relaxed">
-                          ArcGov is community-built. Join the architects shaping the infrastructure for global stablecoin governance.
+                          {t('home.cta_subtitle')}
                        </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-4">
                        <Link href="/governance">
                           <button className="px-8 h-14 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all flex items-center justify-center gap-2 group uppercase tracking-widest text-xs">
-                             Submit Proposal <Plus size={18} />
+                             {t('home.submit_proposal')} <Plus size={18} />
                           </button>
                        </Link>
                        <Link href="/architects">
                           <button className="px-8 h-14 bg-white/10 text-white font-black rounded-2xl hover:bg-white/20 transition-all uppercase tracking-widest text-xs">
-                             Join Architects
+                             {t('home.join_architects')}
                           </button>
                        </Link>
                     </div>
@@ -425,17 +424,17 @@ export default function Home() {
                  <div className="grid grid-cols-2 gap-4">
                     <div className="p-8 bg-white/5 rounded-3xl border border-white/10 space-y-2">
                        <p className="text-3xl font-black text-[#1D9E75]">31.5%</p>
-                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight">Projected Staking Yield</p>
+                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight">{t('home.projected_yield')}</p>
                     </div>
                     <div className="p-8 bg-white/5 rounded-3xl border border-white/10 space-y-2">
                        <p className="text-3xl font-black text-white">8</p>
-                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight">Tier-1 Node Validators</p>
+                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight">{t('home.tier1_validators')}</p>
                     </div>
                     <div className="p-8 bg-white/5 rounded-3xl border border-white/10 space-y-2 col-span-2">
                        <p className="text-lg font-bold text-white leading-relaxed">
-                          &quot;Building on Arc means contributing to the infrastructure layer of institutional stablecoin finance.&quot;
+                          &quot;{t('home.cta_quote')}&quot;
                        </p>
-                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight mt-2">— Arc Community</p>
+                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight mt-2">{t('home.cta_quote_author')}</p>
                     </div>
                  </div>
               </div>

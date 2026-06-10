@@ -4,9 +4,11 @@
 import React, { useState, useEffect } from 'react';
 import { usePublicClient } from 'wagmi';
 import { Loader2, ExternalLink, AlertCircle } from 'lucide-react';
-import { ARCGovCoreABI } from '@/lib/contract';
+import { ARCGovCoreABI, ARC_GOV_CORE_ADDRESS } from '@/lib/contract';
 
-const CONTRACT_ADDRESS = '0x6cFe85E12ED12C619f1bd0240b91ce6f4B2a7d99' as `0x${string}`;
+// Live, env-backed governance contract — keeps the embeddable widget pointed at
+// the same deployment as the rest of the app (the old 0x6cFe85… was dead).
+const CONTRACT_ADDRESS = ARC_GOV_CORE_ADDRESS;
 
 export default function GovernanceWidget() {
   const publicClient = usePublicClient();

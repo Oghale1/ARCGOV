@@ -1,8 +1,10 @@
+'use client';
 // ArcGov — arcgov.vercel.app
 // One badge to render a proposal's current state everywhere, so "Active",
 // "Passed" and "Cancelled" always look and mean the same thing across the app.
 import React from 'react';
 import CountdownTimer from '@/components/shared/CountdownTimer';
+import { useTranslation } from '@/lib/i18n';
 import {
   getProposalStatus,
   getEffectiveDeadline,
@@ -44,6 +46,7 @@ export default function ProposalStatusBadge({
   showCountdown = true,
   className = '',
 }: ProposalStatusBadgeProps) {
+  const { t } = useTranslation();
   const status = getProposalStatus(proposal);
   const styles = STATUS_STYLES[status];
 
@@ -56,7 +59,7 @@ export default function ProposalStatusBadge({
       ) : (
         <>
           <span className={`w-1.5 h-1.5 rounded-full ${styles.dot}`} />
-          <span className={styles.text}>{status}</span>
+          <span className={styles.text}>{t('common.' + status.toLowerCase())}</span>
         </>
       )}
     </div>

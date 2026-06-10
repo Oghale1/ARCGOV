@@ -1,9 +1,11 @@
+'use client';
 // ArcGov — Built by Gemini — arcgov.vercel.app
 import React from 'react';
 import Link from 'next/link';
 import { Clock, User, ChevronRight } from 'lucide-react';
 import ProposalStatusBadge from '@/components/shared/ProposalStatusBadge';
 import { getVotingStart, getEffectiveDeadline } from '@/lib/proposal-status';
+import { useTranslation } from '@/lib/i18n';
 
 export interface Proposal {
   id: bigint | number;
@@ -31,6 +33,7 @@ const CATEGORY_COLORS: any = {
 };
 
 export default function ProposalCard({ proposal }: { proposal: Proposal }) {
+  const { t } = useTranslation();
   const [hasMounted, setHasMounted] = React.useState(false);
   
   React.useEffect(() => {
@@ -64,7 +67,7 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
             </div>
             <h3 className="text-xl font-bold group-hover:text-[#1D9E75] transition-colors">{proposal.title}</h3>
             <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium h-4">
-              <span className="flex items-center gap-1.5"><User size={14} /> Proposed by {proposal.proposer.slice(0, 6)}...{proposal.proposer.slice(-4)}</span>
+              <span className="flex items-center gap-1.5"><User size={14} /> {t('proposal.proposed_by')} {proposal.proposer.slice(0, 6)}...{proposal.proposer.slice(-4)}</span>
               {hasMounted ? (
                 <span className="flex items-center gap-1.5"><Clock size={14} /> {fmtDate(votingStart)} – {fmtDate(votingEnd)}</span>
               ) : (
@@ -83,12 +86,12 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
           </div>
           <div className="flex justify-between items-center">
             <p className="text-[11px] font-bold text-gray-500">
-              <span className="text-[#1D9E75]">{forVotes} For</span> · 
-              <span className="text-red-500 ml-1.5">{againstVotes} Against</span> · 
-              <span className="ml-1.5">{abstainVotes} Abstain</span>
+              <span className="text-[#1D9E75]">{forVotes} {t('common.for')}</span> ·
+              <span className="text-red-500 ml-1.5">{againstVotes} {t('common.against')}</span> ·
+              <span className="ml-1.5">{abstainVotes} {t('common.abstain')}</span>
             </p>
             <span className="text-[11px] font-black text-[#1D9E75] flex items-center gap-1 group-hover:gap-2 transition-all uppercase">
-              View & Vote <ChevronRight size={14} />
+              {t('common.view_vote')} <ChevronRight size={14} />
             </span>
           </div>
         </div>

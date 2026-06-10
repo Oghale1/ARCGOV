@@ -28,9 +28,11 @@ const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.Res
 import validators from '@/data/validators.json';
 import { submitForm } from '@/lib/submit';
 import { useToast } from '@/components/shared/Toast';
+import { useTranslation } from '@/lib/i18n';
 
 export default function QuantumReadiness() {
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // --- STATE ---
   const [email, setEmail] = useState('');
@@ -62,7 +64,7 @@ export default function QuantumReadiness() {
     const { ok, ref, error, code } = await submitForm('quantum_subscriber', { email });
     if (ok) {
       setSubmissionId(ref || 'SUCCESS');
-      toast("Subscribed to quantum updates", "success");
+      toast(t('quantum.sub_success'), "success");
 
       // Send confirmation email — fire-and-forget, never block the UI.
       fetch('/api/notify', {
@@ -75,9 +77,9 @@ export default function QuantumReadiness() {
         }),
       }).catch(console.error);
     } else if (code === '23505') {
-      toast("You are already subscribed!", "info");
+      toast(t('quantum.sub_already'), "info");
     } else {
-      toast(error || "Subscription failed. Please try again.", "error");
+      toast(error || t('quantum.sub_failed'), "error");
     }
     setIsSubmitting(false);
   };
@@ -88,23 +90,20 @@ export default function QuantumReadiness() {
         {/* SECTION 1 — HERO */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1D9E75]/10 text-[#1D9E75] text-[10px] font-black tracking-widest mb-6 border border-[#1D9E75]/20 uppercase">
-            <Cpu size={12} /> Post-Quantum Era
+            <Cpu size={12} /> {t('quantum.era')}
           </div>
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-[0.9]">
-            QUANTUM-RESISTANT <br />
-            <span className="text-[#1D9E75]">INFRASTRUCTURE</span>
+            {t('quantum.hero_1')} <br />
+            <span className="text-[#1D9E75]">{t('quantum.hero_2')}</span>
           </h1>
           <p className="max-w-2xl mx-auto text-lg text-gray-500 dark:text-gray-400 font-medium mb-10">
-            Arc is building blockchain infrastructure that protects against future quantum computing threats, 
-            ensuring institutional assets remain secure for decades to come.
+            {t('quantum.hero_sub')}
           </p>
 
           <div className="text-xs text-gray-500 text-center mb-8 px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-lg max-w-2xl mx-auto leading-relaxed">
-            ℹ️ Quantum readiness status is reported by validators and manually verified by the ArcGov team. 
-            Arc Testnet does not publish a real-time quantum upgrade API. 
-            Data is updated when validators confirm milestone completions.
+            ℹ️ {t('quantum.info')}
             <br />
-            Last updated: {new Date().toLocaleDateString()}
+            {t('quantum.last_updated')}: {new Date().toLocaleDateString()}
           </div>
         </section>
 
@@ -112,21 +111,13 @@ export default function QuantumReadiness() {
         <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
           <div className="p-10 md:p-12 bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-[48px] grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <h2 className="text-3xl font-black tracking-tight">Why It Matters</h2>
+              <h2 className="text-3xl font-black tracking-tight">{t('quantum.why_matters')}</h2>
               <div className="space-y-4 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                 <p>
-                  Traditional blockchain security relies on elliptic curve cryptography (ECC). 
-                  Quantum computers, specifically using Shor&apos;s algorithm, threaten these systems 
-                  by solving the underlying mathematical problems exponentially faster than classical computers. 
-                  This means private keys could eventually be derived from public addresses, 
-                  compromising the entire network&apos;s immutability.
+                  {t('quantum.why_p1')}
                 </p>
                 <p>
-                  Post-quantum cryptography (PQC) involves mathematical algorithms that are believed 
-                  to be secure against both quantum and classical computers. Arc is proactively 
-                  investing in these standards—like CRYSTALS-Dilithium—to harden our network 
-                  before the &quot;Q-Day&quot; threat becomes reality, ensuring total security for the 
-                  world&apos;s stablecoin infrastructure.
+                  {t('quantum.why_p2')}
                 </p>
               </div>
             </div>
@@ -162,46 +153,46 @@ export default function QuantumReadiness() {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-5xl font-black">{readinessMetrics.percentage}%</span>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Ready</span>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{t('quantum.ready')}</span>
               </div>
            </div>
-           <h3 className="text-2xl font-black mb-2">Network Quantum Readiness</h3>
+           <h3 className="text-2xl font-black mb-2">{t('quantum.network_readiness')}</h3>
            <p className="text-sm font-bold text-[#1D9E75] uppercase tracking-tighter">
-             {readinessMetrics.readyCount} of {readinessMetrics.total} validators fully quantum-ready
+             {t('quantum.validators_ready', { ready: readinessMetrics.readyCount, total: readinessMetrics.total })}
            </p>
         </section>
 
         {/* SECTION 4 — 4-PHASE ROADMAP */}
         <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-24 space-y-4">
-           <h2 className="text-2xl font-black mb-8 px-4 text-center md:text-left">Upgrade Roadmap</h2>
+           <h2 className="text-2xl font-black mb-8 px-4 text-center md:text-left">{t('quantum.roadmap')}</h2>
            {[
-             { 
-               phase: 'Phase 1', 
-               title: 'Post-Quantum Wallet Signatures', 
-               status: 'In Progress', 
+             {
+               phase: 'Phase 1',
+               title: t('quantum.phase1_title'),
+               status: t('quantum.phase1_status'),
                statusColor: 'bg-amber-100 text-amber-700',
-               desc: 'Validators upgrade signing keys to quantum-resistant algorithms (CRYSTALS-Dilithium) to secure administrative actions.' 
+               desc: t('quantum.phase1_desc')
              },
-             { 
-               phase: 'Phase 2', 
-               title: 'Private State Encryption', 
-               status: 'Planned', 
+             {
+               phase: 'Phase 2',
+               title: t('quantum.phase2_title'),
+               status: t('quantum.phase2_status'),
                statusColor: 'bg-gray-100 text-gray-500',
-               desc: 'Integration of post-quantum encryption standards for account balances and transaction metadata.' 
+               desc: t('quantum.phase2_desc')
              },
-             { 
-               phase: 'Phase 3', 
-               title: 'Validator Signature Hardening', 
-               status: 'Planned', 
+             {
+               phase: 'Phase 3',
+               title: t('quantum.phase3_title'),
+               status: t('quantum.phase3_status'),
                statusColor: 'bg-gray-100 text-gray-500',
-               desc: 'Upgrading the consensus layer block production signatures to be fully quantum-resistant.' 
+               desc: t('quantum.phase3_desc')
              },
-             { 
-               phase: 'Phase 4', 
-               title: 'Full Network Quantum Resistance', 
-               status: 'Future', 
+             {
+               phase: 'Phase 4',
+               title: t('quantum.phase4_title'),
+               status: t('quantum.phase4_status'),
                statusColor: 'bg-gray-100 text-gray-500',
-               desc: 'End-to-end quantum security across all Arc protocol layers and institutional bridge infrastructure.' 
+               desc: t('quantum.phase4_desc')
              },
            ].map((item) => (
              <div key={item.phase} className="p-8 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-3xl flex flex-col md:flex-row gap-6 items-start">
@@ -227,9 +218,9 @@ export default function QuantumReadiness() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
               <div className="text-center md:text-left">
-                <h2 className="text-3xl font-black mb-2">Validator Readiness Matrix</h2>
+                <h2 className="text-3xl font-black mb-2">{t('quantum.matrix')}</h2>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  Matrix last updated: Oct 28, 2025
+                  {t('quantum.matrix_updated')}
                 </p>
               </div>
            </div>
@@ -239,10 +230,10 @@ export default function QuantumReadiness() {
               <table className="w-full text-left border-collapse">
                  <thead>
                     <tr className="bg-gray-50/50 dark:bg-gray-900/30 border-b border-gray-100 dark:border-gray-800">
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">Validator</th>
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">PQ Wallet</th>
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Private State</th>
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Sig Hardening</th>
+                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('quantum.col_validator')}</th>
+                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">{t('quantum.col_pq_wallet')}</th>
+                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">{t('quantum.col_private_state')}</th>
+                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">{t('quantum.col_sig_hardening')}</th>
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
@@ -301,9 +292,9 @@ export default function QuantumReadiness() {
                    </div>
                    <div className="grid grid-cols-3 gap-2">
                       {[
-                        { label: 'PQ Wallet', status: v.quantumChecks?.postQuantumWallet },
-                        { label: 'Private State', status: v.quantumChecks?.privateStateEncryption },
-                        { label: 'Hardening', status: v.quantumChecks?.signatureHardening },
+                        { label: t('quantum.col_pq_wallet'), status: v.quantumChecks?.postQuantumWallet },
+                        { label: t('quantum.col_private_state'), status: v.quantumChecks?.privateStateEncryption },
+                        { label: t('quantum.col_hardening'), status: v.quantumChecks?.signatureHardening },
                       ].map((check) => (
                         <div key={check.label} className="flex flex-col items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-tighter text-center h-4">{check.label}</span>
@@ -325,17 +316,17 @@ export default function QuantumReadiness() {
            <div className="p-12 md:p-16 bg-[#0F1117] text-white rounded-[48px] text-center space-y-8 relative overflow-hidden shadow-2xl">
               <div className="absolute top-0 left-0 w-64 h-64 bg-[#1D9E75] rounded-full blur-[120px] -mr-32 -mt-32 opacity-20" />
               <div className="relative z-10 space-y-4">
-                 <h2 className="text-3xl font-black">Stay Ahead of the Curve</h2>
+                 <h2 className="text-3xl font-black">{t('quantum.subscribe_title')}</h2>
                  <p className="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">
-                   Get notified when validators complete quantum upgrade milestones.
+                   {t('quantum.subscribe_desc')}
                  </p>
               </div>
 
               {submissionId ? (
                 <div className="relative z-10 p-8 bg-white/5 border border-white/10 rounded-3xl text-center animate-in zoom-in duration-300">
                    <CheckCircle2 size={48} className="text-[#1D9E75] mx-auto mb-4" />
-                   <h4 className="text-xl font-bold mb-2">Subscription Confirmed</h4>
-                   <p className="text-xs text-gray-500">Reference: <span className="font-mono text-[#1D9E75]">{submissionId}</span></p>
+                   <h4 className="text-xl font-bold mb-2">{t('quantum.sub_confirmed')}</h4>
+                   <p className="text-xs text-gray-500">{t('common.reference')}: <span className="font-mono text-[#1D9E75]">{submissionId}</span></p>
                 </div>
               ) : (
                 <form onSubmit={handleSubscribe} className="relative z-10 max-w-md mx-auto flex flex-col md:flex-row gap-4">
@@ -344,18 +335,18 @@ export default function QuantumReadiness() {
                       <input 
                         type="email" 
                         required 
-                        placeholder="Enter your email"
+                        placeholder={t('common.your_email')}
                         className="w-full pl-12 pr-4 h-12 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-[#1D9E75] transition-all font-medium text-sm"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                       />
                    </div>
-                   <button 
+                   <button
                     type="submit"
                     disabled={isSubmitting}
                     className="px-8 h-12 bg-[#1D9E75] text-white font-black rounded-2xl hover:bg-[#0F6E56] transition-all shadow-lg shadow-[#1D9E75]/20 flex items-center justify-center gap-2"
                    >
-                     {isSubmitting ? <Loader2 className="animate-spin" /> : 'SUBSCRIBE'}
+                     {isSubmitting ? <Loader2 className="animate-spin" /> : t('quantum.subscribe')}
                    </button>
                 </form>
               )}
