@@ -43,6 +43,7 @@ const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.Res
 import {
   getAllProposals,
   hasVoted,
+  getVoterChoice,
   ARCGovCoreABI,
   ARC_GOV_CORE_ADDRESS
 } from '@/lib/contract';
@@ -84,6 +85,8 @@ export default function MyDashboard() {
   const [activeTab, setActiveTab] = useState('Overview');
   const [isLoading, setIsLoading] = useState(true);
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
+  // How many rows of voting history are revealed (10 at a time).
+  const [visibleVotes, setVisibleVotes] = useState(10);
 
   // --- DATA STATE ---
   const [usdcBalance, setUsdcBalance] = useState('0.00');
@@ -129,29 +132,56 @@ export default function MyDashboard() {
         setSettings(prev => ({ ...prev, ...savedSettings.data, email: savedSettings.data.email ?? '' }));
       }
 
-      // Fetch My Votes from events
-      if (publicClient) {
-        const logs = await publicClient.getContractEvents({
-          address: CONTRACT_ADDRESS,
-          abi: ARCGovCoreABI,
-          eventName: 'VoteCast',
-          args: { voter: address as `0x${string}` },
-          fromBlock: BigInt(0)
-        });
-        
-        const formattedVotes = logs.map((log: any) => {
-          const propId = Number(log.args.proposalId);
-          const proposal = (allProposals as any[]).find(p => Number(p.id) === propId);
+      // --- My Votes ---
+      // Derive vote history from on-chain VIEW calls (hasVotedOn / getVoterChoice),
+      // NOT from eth_getLogs. Public Arc RPCs reject or silently truncate wide
+      // `getContractEvents` ranges (fromBlock 0 → latest), which is exactly why
+      // this list — and the Participation Score and Proposals Voted counts that
+      // depend on it — all read empty even after voting. View calls go through
+      // eth_call and are reliable. We still try event logs afterwards, but only
+      // as a best-effort source of transaction hashes for explorer links.
+      const voteChecks = await Promise.all(
+        (allProposals as any[]).map(async (p) => {
+          const propId = Number(p.id);
+          const voted = await hasVoted(propId, address!);
+          if (!voted) return null;
+          const choice = await getVoterChoice(propId, address!);
           return {
             proposalId: propId,
-            title: proposal?.title || `Proposal #${propId}`,
-            voteType: Number(log.args.voteType),
-            transactionHash: log.transactionHash,
-            timestamp: 0 
+            title: p.title || `Proposal #${propId}`,
+            voteType: choice,
+            transactionHash: null as string | null,
           };
-        });
-        setMyVotes(formattedVotes);
+        })
+      );
+      const derivedVotes = voteChecks
+        .filter((v): v is NonNullable<typeof v> => v !== null)
+        .sort((a, b) => b.proposalId - a.proposalId);
+
+      // Best-effort: attach tx hashes from VoteCast logs so the explorer links
+      // work. If the RPC refuses the log range, votes still render (without a
+      // per-row explorer link) instead of the whole history vanishing.
+      if (publicClient && derivedVotes.length > 0) {
+        try {
+          const logs = await publicClient.getContractEvents({
+            address: CONTRACT_ADDRESS,
+            abi: ARCGovCoreABI,
+            eventName: 'VoteCast',
+            args: { voter: address as `0x${string}` },
+            fromBlock: BigInt(0)
+          });
+          const txByProposal = new Map<number, string>();
+          for (const log of logs as any[]) {
+            txByProposal.set(Number(log.args.proposalId), log.transactionHash);
+          }
+          for (const v of derivedVotes) {
+            v.transactionHash = txByProposal.get(v.proposalId) ?? null;
+          }
+        } catch (logErr) {
+          console.warn('VoteCast log enrichment failed (explorer links omitted):', logErr);
+        }
       }
+      setMyVotes(derivedVotes);
 
       setLastFetchedAt(new Date());
     } catch (err) {
@@ -189,11 +219,14 @@ export default function MyDashboard() {
   }, [proposalsWithMeta, address]);
 
   const stats = useMemo(() => {
-    // Participation = share of *votable* proposals this wallet has voted on.
-    // We count against proposals whose voting window has actually opened, so a
-    // future-dated proposal doesn't dilute the score.
+    // Participation = share of *addressable* proposals this wallet has engaged
+    // with, where "engaged" means voted on OR authored. We count against
+    // proposals whose voting window has actually opened, so a future-dated
+    // proposal doesn't dilute the score.
     const votesCastCount = myVotes.length;
     const votedIds = new Set(myVotes.map(v => v.proposalId));
+    const authoredIds = new Set(myProposals.map(p => Number(p.id)));
+    const engagedIds = new Set<number>([...votedIds, ...authoredIds]);
 
     // Only genuinely live proposals still need a vote (deadline in the future
     // AND not already voted on by this wallet).
@@ -202,13 +235,18 @@ export default function MyDashboard() {
     );
 
     // Denominator: proposals that have ever been open for this wallet to act on
-    // (started voting), so the score reflects real, addressable participation.
+    // (their voting window has started), so the score reflects real, addressable
+    // participation. Numerator: how many of those the wallet engaged with.
     const now = Date.now();
-    const addressable = proposalsWithMeta.filter(p => {
+    const hasStarted = (p: any) => {
       const start = p.customStart instanceof Date ? p.customStart.getTime() : 0;
       return start <= now;
-    }).length;
-    const score = addressable > 0 ? Math.round((votesCastCount / addressable) * 100) : 0;
+    };
+    const addressable = proposalsWithMeta.filter(hasStarted).length;
+    const engagedAddressable = proposalsWithMeta.filter(
+      p => hasStarted(p) && engagedIds.has(Number(p.id))
+    ).length;
+    const score = addressable > 0 ? Math.round((engagedAddressable / addressable) * 100) : 0;
 
     return {
       participationScore: Math.min(score, 100),
@@ -233,7 +271,7 @@ export default function MyDashboard() {
       `"${v.title.replace(/"/g, '""')}"`,
       v.voteType === 0 ? "FOR" : v.voteType === 1 ? "AGAINST" : "ABSTAIN",
       new Date().toLocaleDateString(),
-      `https://testnet.arcscan.app/tx/${v.transactionHash}`
+      v.transactionHash ? `https://testnet.arcscan.app/tx/${v.transactionHash}` : ""
     ]);
 
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
@@ -506,7 +544,7 @@ export default function MyDashboard() {
                                </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
-                               {myVotes.map((vote, i) => (
+                               {myVotes.slice(0, visibleVotes).map((vote, i) => (
                                  <tr key={i} className="hover:bg-gray-50/30 dark:hover:bg-gray-900/30 transition-colors">
                                     <td className="px-6 py-5 font-mono text-[10px] text-gray-400">#{vote.proposalId}</td>
                                     <td className="px-6 py-5">
@@ -522,9 +560,13 @@ export default function MyDashboard() {
                                        </span>
                                     </td>
                                     <td className="px-6 py-5 text-right no-print">
-                                       <a href={`https://testnet.arcscan.app/tx/${vote.transactionHash}`} target="_blank" rel="noopener noreferrer" className="inline-block text-gray-400 hover:text-[#1D9E75] transition-colors">
-                                          <ExternalLink size={14} />
-                                       </a>
+                                       {vote.transactionHash ? (
+                                         <a href={`https://testnet.arcscan.app/tx/${vote.transactionHash}`} target="_blank" rel="noopener noreferrer" className="inline-block text-gray-400 hover:text-[#1D9E75] transition-colors">
+                                            <ExternalLink size={14} />
+                                         </a>
+                                       ) : (
+                                         <span className="text-gray-300 dark:text-gray-700">—</span>
+                                       )}
                                     </td>
                                  </tr>
                                ))}
@@ -534,7 +576,7 @@ export default function MyDashboard() {
 
                         {/* MOBILE CARDS */}
                         <div className="grid md:hidden grid-cols-1 gap-4">
-                           {myVotes.map((vote, i) => (
+                           {myVotes.slice(0, visibleVotes).map((vote, i) => (
                              <div key={i} className="p-5 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-3xl space-y-4">
                                 <div className="flex items-center justify-between">
                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Proposal #{vote.proposalId}</span>
@@ -549,13 +591,32 @@ export default function MyDashboard() {
                                 <Link href={`/governance/${vote.proposalId}`} className="block font-bold text-sm leading-tight hover:text-[#1D9E75] transition-colors">{vote.title}</Link>
                                 <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-900">
                                    <span className="text-[10px] font-bold text-gray-400">{t('dashboard.synced_onchain')}</span>
-                                   <a href={`https://testnet.arcscan.app/tx/${vote.transactionHash}`} target="_blank" rel="noopener noreferrer" className="text-[#1D9E75] flex items-center gap-1.5 text-[10px] font-black uppercase">
-                                      {t('dashboard.explorer')} <ExternalLink size={12} />
-                                   </a>
+                                   {vote.transactionHash ? (
+                                     <a href={`https://testnet.arcscan.app/tx/${vote.transactionHash}`} target="_blank" rel="noopener noreferrer" className="text-[#1D9E75] flex items-center gap-1.5 text-[10px] font-black uppercase">
+                                        {t('dashboard.explorer')} <ExternalLink size={12} />
+                                     </a>
+                                   ) : (
+                                     <span className="text-gray-300 dark:text-gray-700 text-[10px] font-black">—</span>
+                                   )}
                                 </div>
                              </div>
                            ))}
                         </div>
+
+                        {/* SHOW MORE — reveal the next 10 rows of history */}
+                        {myVotes.length > visibleVotes && (
+                          <div className="mt-6 flex flex-col items-center gap-2 no-print">
+                            <button
+                              onClick={() => setVisibleVotes(v => v + 10)}
+                              className="px-6 h-12 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-black rounded-xl transition-all border border-gray-100 dark:border-gray-700 flex items-center gap-2"
+                            >
+                              {t('dashboard.show_more')} <ChevronRight size={14} className="rotate-90" />
+                            </button>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                              {Math.min(visibleVotes, myVotes.length)} / {myVotes.length}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="p-20 bg-gray-50/50 dark:bg-gray-900/30 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-[40px] text-center space-y-6">

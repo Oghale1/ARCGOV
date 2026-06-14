@@ -510,6 +510,7 @@
     "col_explorer": "Explorer",
     "synced_onchain": "SYNCED ON-CHAIN",
     "explorer": "Explorer",
+    "show_more": "Show next 10",
     "no_votes": "No votes yet",
     "no_votes_desc": "Browse active proposals to start participating in governance.",
     "view_proposals": "View Proposals",
