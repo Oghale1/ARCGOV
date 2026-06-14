@@ -398,6 +398,15 @@ export default function ProposalClient() {
                           <div className="h-full bg-red-500" style={{ width: `${againstPercent}%` }} />
                        </div>
                     </div>
+                    <div className="space-y-2">
+                       <div className="flex justify-between text-sm font-black">
+                          <span className="text-gray-500 dark:text-gray-400">ABSTAIN</span>
+                          <span>{abstainPercent.toFixed(1)}%</span>
+                       </div>
+                       <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-gray-400 dark:bg-gray-500" style={{ width: `${abstainPercent}%` }} />
+                       </div>
+                    </div>
                   </div>
 
                   {votingActive && (
@@ -424,7 +433,7 @@ export default function ProposalClient() {
                             </button>
                             <button
                               onClick={() => handleVoteClick(2)}
-                              className="w-full py-4 text-gray-400 font-bold rounded-2xl hover:bg-gray-100 transition-all h-14"
+                              className="w-full py-4 border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-black rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all h-14"
                             >
                               {t('proposal.abstain')}
                             </button>

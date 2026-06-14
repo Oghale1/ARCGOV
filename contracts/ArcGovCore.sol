@@ -36,6 +36,12 @@ contract ArcGovCore {
     /// @notice Minimum number of total votes for a proposal to be able to pass.
     uint256 public constant QUORUM = 5;
 
+    /// @notice Bounds for a proposer-chosen voting window. The deadline is set
+    ///         to `block.timestamp + votingDuration` at creation, so whatever
+    ///         window the UI shows is exactly what the contract enforces.
+    uint256 public constant MIN_VOTING_DURATION = 1 hours;
+    uint256 public constant MAX_VOTING_DURATION = 365 days;
+
     event ProposalCreated(uint256 indexed id, address indexed proposer, string title, Category category, uint256 votingDeadline);
     event VoteCast(uint256 indexed proposalId, address indexed voter, VoteType voteType, uint256 newForVotes, uint256 newAgainstVotes, uint256 newAbstainVotes);
     event ProposalExecuted(uint256 indexed id, bool passed, uint256 forVotes, uint256 againstVotes);
@@ -49,15 +55,28 @@ contract ArcGovCore {
         admin = msg.sender;
     }
 
+    /**
+     * @notice Create a proposal with a proposer-chosen voting window.
+     * @param votingDuration Length of the voting window in seconds. The on-chain
+     *        deadline becomes `block.timestamp + votingDuration`, so a "30-day"
+     *        proposal in the UI is genuinely a 30-day window on-chain. Must be
+     *        within [MIN_VOTING_DURATION, MAX_VOTING_DURATION].
+     */
     function submitProposal(
         string memory title,
         string memory description,
         Category category,
-        string memory ipfsHash
+        string memory ipfsHash,
+        uint256 votingDuration
     ) external returns (uint256) {
+        require(bytes(title).length > 0, "Title cannot be empty");
+        require(
+            votingDuration >= MIN_VOTING_DURATION && votingDuration <= MAX_VOTING_DURATION,
+            "Voting duration out of range"
+        );
         proposalCount++;
         uint256 newId = proposalCount;
-        uint256 deadline = block.timestamp + 7 days;
+        uint256 deadline = block.timestamp + votingDuration;
 
         proposals[newId] = Proposal({
             id: newId,

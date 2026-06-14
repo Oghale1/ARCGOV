@@ -18,7 +18,7 @@ export const ARC_GOV_CORE_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
 // Full ABI inline
 export const ARC_GOV_CORE_ABI = parseAbi([
   "struct Proposal { uint256 id; string title; string description; uint8 category; string ipfsHash; address proposer; uint256 createdAt; uint256 votingDeadline; uint256 forVotes; uint256 againstVotes; uint256 abstainVotes; bool isOpen; }",
-  "function submitProposal(string title, string description, uint8 category, string ipfsHash) returns (uint256)",
+  "function submitProposal(string title, string description, uint8 category, string ipfsHash, uint256 votingDuration) returns (uint256)",
   "function castVote(uint256 proposalId, uint8 voteType) returns (bool)",
   "function closeProposal(uint256 proposalId) returns (bool)",
   "function getProposal(uint256 id) view returns (Proposal)",
@@ -134,7 +134,12 @@ export async function getVoterChoice(proposalId: number, address: string): Promi
 }
 
 /**
- * Submits a new proposal to the contract
+ * Submits a new proposal to the contract.
+ *
+ * @param votingDurationSeconds Length of the voting window in seconds. This is
+ *   set on-chain as `block.timestamp + votingDurationSeconds`, so the deadline
+ *   the UI shows is exactly the one the contract enforces (no more 7-day-only
+ *   votes silently expiring on "30-day" proposals). Defaults to 7 days.
  * Returns { hash, proposalId }
  */
 export async function submitProposal(
@@ -142,7 +147,8 @@ export async function submitProposal(
   description: string,
   category: number,
   walletClient: WalletClient,
-  publicClientForWrite: PublicClient
+  publicClientForWrite: PublicClient,
+  votingDurationSeconds: number = 7 * 24 * 60 * 60
 ): Promise<{ hash: `0x${string}`, proposalId: number }> {
   try {
     const [address] = await walletClient.getAddresses();
@@ -151,7 +157,7 @@ export async function submitProposal(
       address: CONTRACT_ADDRESS,
       abi: ARCGovCoreABI,
       functionName: 'submitProposal',
-      args: [title, description, category, ""], // ipfsHash left empty
+      args: [title, description, category, "", BigInt(Math.round(votingDurationSeconds))], // ipfsHash left empty
     });
     
     const hash = await walletClient.writeContract(request);

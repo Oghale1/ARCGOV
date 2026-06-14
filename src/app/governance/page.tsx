@@ -178,6 +178,14 @@ export default function Governance() {
       return;
     }
 
+    // Voting window length the contract will actually enforce. The on-chain
+    // deadline is set to (now + this many seconds), so the countdown the UI
+    // shows matches the contract — long proposals stay votable until they end.
+    const votingDurationSeconds = Math.max(
+      3600, // contract MIN_VOTING_DURATION (1 hour)
+      Math.round((deadline.getTime() - Date.now()) / 1000)
+    );
+
     const toastId = toast("Submitting to Arc Testnet...", "loading");
     setIsSubmitting(true);
 
@@ -191,7 +199,8 @@ export default function Governance() {
         fullDescription,
         formData.category,
         walletClient,
-        publicClient as any
+        publicClient as any,
+        votingDurationSeconds
       );
 
       // Store metadata off-chain (custom voting window) via the server route,
@@ -203,11 +212,12 @@ export default function Governance() {
         submitter_wallet: address,
       });
       if (!metaOk) {
-        // The custom voting window was NOT persisted, so the proposal will fall
-        // back to the contract's hard-coded 7-day deadline on every read.
+        // The on-chain deadline now reflects the chosen duration, so voting
+        // still works. Only the display extras (custom start time) weren't
+        // saved — the proposal falls back to its on-chain timestamps.
         console.error('proposal_metadata insert failed:', metaError);
         toast(
-          "Proposal submitted on-chain, but the custom voting window couldn't be saved (defaults to 7 days). Run the SQL migration.",
+          "Proposal submitted on-chain. (Display metadata couldn't be saved — run the SQL migration; voting still works.)",
           "error"
         );
       }
