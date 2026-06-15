@@ -355,6 +355,10 @@ export default function Home() {
                                   <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
                                   <span className="text-[10px] font-black uppercase text-red-500">{Number(p.againstVotes)} {t('common.against')}</span>
                                </div>
+                               <div className="flex items-center gap-1.5">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
+                                  <span className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500">{Number(p.abstainVotes)} {t('common.abstain')}</span>
+                               </div>
                             </div>
                             <ChevronRight size={18} className="text-gray-300 group-hover:text-[#1D9E75] transition-all" />
                          </div>
