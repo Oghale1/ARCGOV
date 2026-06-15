@@ -47,6 +47,7 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
   
   const forPercent = totalVotes > 0 ? (forVotes / totalVotes) * 100 : 0;
   const againstPercent = totalVotes > 0 ? (againstVotes / totalVotes) * 100 : 0;
+  const abstainPercent = totalVotes > 0 ? (abstainVotes / totalVotes) * 100 : 0;
 
   const votingStart = getVotingStart(proposal);
   const votingEnd = getEffectiveDeadline(proposal);
@@ -83,12 +84,13 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
           <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden flex">
             <div className="h-full bg-[#1D9E75]" style={{ width: `${forPercent}%` }} />
             <div className="h-full bg-red-500" style={{ width: `${againstPercent}%` }} />
+            <div className="h-full bg-gray-400 dark:bg-gray-500" style={{ width: `${abstainPercent}%` }} />
           </div>
           <div className="flex justify-between items-center">
             <p className="text-[11px] font-bold text-gray-500">
               <span className="text-[#1D9E75]">{forVotes} {t('common.for')}</span> ·
               <span className="text-red-500 ml-1.5">{againstVotes} {t('common.against')}</span> ·
-              <span className="ml-1.5">{abstainVotes} {t('common.abstain')}</span>
+              <span className="text-gray-400 dark:text-gray-500 ml-1.5">{abstainVotes} {t('common.abstain')}</span>
             </p>
             <span className="text-[11px] font-black text-[#1D9E75] flex items-center gap-1 group-hover:gap-2 transition-all uppercase">
               {t('common.view_vote')} <ChevronRight size={14} />

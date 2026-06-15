@@ -84,6 +84,7 @@ export default function RecentProposals({
           const status = getProposalStatus(p);
           const forVotes = Number(p.forVotes);
           const againstVotes = Number(p.againstVotes);
+          const abstainVotes = Number(p.abstainVotes);
           return (
             <Link key={p.id.toString()} href={`/governance/${p.id}`}>
               <div className="p-5 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-2xl hover:border-[#1D9E75] transition-all group flex items-center justify-between gap-4">
@@ -108,6 +109,8 @@ export default function RecentProposals({
                       <span className="text-[#1D9E75]">{forVotes} For</span>
                       <span className="w-1 h-1 rounded-full bg-gray-300" />
                       <span className="text-red-500">{againstVotes} Against</span>
+                      <span className="w-1 h-1 rounded-full bg-gray-300" />
+                      <span className="text-gray-400 dark:text-gray-500">{abstainVotes} Abstain</span>
                     </div>
                   </div>
                 </div>

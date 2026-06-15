@@ -88,6 +88,8 @@
     "failed": "Reprovadas",
     "rejected": "Rejeitadas",
     "filter_all": "Todas",
+    "active_proposals": "Propostas ativas",
+    "past_proposals": "Propostas anteriores",
     "search_placeholder": "Pesquisar propostas por título...",
     "featured": "Em destaque",
     "aip001_title": "Lançar o token comunitário tARC",

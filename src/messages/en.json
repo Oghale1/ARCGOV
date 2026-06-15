@@ -88,6 +88,8 @@
     "failed": "Failed",
     "rejected": "Rejected",
     "filter_all": "All",
+    "active_proposals": "Active Proposals",
+    "past_proposals": "Past Proposals",
     "search_placeholder": "Search proposals by title...",
     "featured": "Featured",
     "aip001_title": "Launch the tARC Community Token",

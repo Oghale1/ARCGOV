@@ -88,6 +88,8 @@
     "failed": "Échouées",
     "rejected": "Rejetées",
     "filter_all": "Toutes",
+    "active_proposals": "Propositions actives",
+    "past_proposals": "Propositions passées",
     "search_placeholder": "Rechercher des propositions par titre...",
     "featured": "À la une",
     "aip001_title": "Lancer le jeton communautaire tARC",

@@ -130,6 +130,18 @@ export default function Governance() {
     }).sort((a, b) => Number(b.id) - Number(a.id));
   }, [proposalsWithMetadata, search, filterTab]);
 
+  // Split the visible proposals into "Active" (voting still open) and "Past"
+  // (decided) so the list reads like the home overview. The tab filter already
+  // narrows the set, so a section simply renders empty when it has no matches.
+  const activeProposals = useMemo(
+    () => filteredProposals.filter(p => getProposalStatus(p) === 'Active'),
+    [filteredProposals]
+  );
+  const pastProposals = useMemo(
+    () => filteredProposals.filter(p => getProposalStatus(p) !== 'Active'),
+    [filteredProposals]
+  );
+
   // Modal Handlers
   const [formData, setFormData] = useState({
     title: '',
@@ -358,9 +370,33 @@ export default function Governance() {
           {isLoading ? (
             [1, 2, 3, 4].map(i => <SkeletonLoader key={i} height="160px" className="rounded-[24px]" />)
           ) : filteredProposals.length > 0 ? (
-            filteredProposals.map((p) => (
-              <ProposalCard key={p.id.toString()} proposal={p} />
-            ))
+            <>
+              {activeProposals.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 pt-2">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[#1D9E75]">{t('governance.active_proposals')}</h3>
+                    <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#1D9E75]/10 text-[10px] font-black text-[#1D9E75]">{activeProposals.length}</span>
+                    <div className="flex-grow h-px bg-gray-100 dark:bg-gray-800" />
+                  </div>
+                  {activeProposals.map((p) => (
+                    <ProposalCard key={p.id.toString()} proposal={p} />
+                  ))}
+                </div>
+              )}
+
+              {pastProposals.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 pt-2">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">{t('governance.past_proposals')}</h3>
+                    <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-black text-gray-500">{pastProposals.length}</span>
+                    <div className="flex-grow h-px bg-gray-100 dark:bg-gray-800" />
+                  </div>
+                  {pastProposals.map((p) => (
+                    <ProposalCard key={p.id.toString()} proposal={p} />
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-24 bg-gray-50/50 dark:bg-gray-900/20 rounded-[40px] border-2 border-dashed border-gray-100 dark:border-gray-800">
                <div className="w-16 h-16 bg-white dark:bg-[#0F1117] rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100 dark:border-gray-800">
