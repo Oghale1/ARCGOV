@@ -53,8 +53,14 @@ export default function ProposalCard({ proposal }: { proposal: Proposal }) {
   const votingEnd = getEffectiveDeadline(proposal);
   const fmtDate = (d: Date) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
+  // AIP-001 keeps its dedicated rich page; every other proposal uses the
+  // generic /governance/[id] view.
+  const href = proposal.title.toUpperCase().includes('AIP-001')
+    ? '/governance/aip-001'
+    : `/governance/${proposal.id}`;
+
   return (
-    <Link href={`/governance/${proposal.id}`}>
+    <Link href={href}>
       <div className="p-8 bg-white dark:bg-[#0F1117] border border-gray-100 dark:border-gray-800 rounded-[24px] hover:border-[#1D9E75] transition-all group relative overflow-hidden">
         <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
           <div className="space-y-2">

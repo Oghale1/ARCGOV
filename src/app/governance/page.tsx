@@ -15,8 +15,7 @@ import {
   AlertCircle,
   Loader2,
   X,
-  Calendar as CalendarIcon,
-  ArrowRight
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import { getAllProposals, submitProposal, ARC_GOV_CORE_ADDRESS } from '@/lib/contract';
 import { getProposalStatus } from '@/lib/proposal-status';
@@ -347,26 +346,6 @@ export default function Governance() {
 
         {/* SECTION 4 — PROPOSAL LIST */}
         <div className="space-y-4">
-          {/* FEATURED: AIP-001 */}
-          <div className="p-8 bg-[#E1F5EE] dark:bg-[#1D9E75]/5 border-2 border-[#1D9E75] rounded-[24px] relative overflow-hidden shadow-lg shadow-[#1D9E75]/10 animate-in fade-in slide-in-from-top-4 duration-700">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-[#1D9E75] rounded-full blur-[80px] -mr-16 -mt-16 opacity-20" />
-             <div className="flex flex-wrap justify-between items-center gap-6 relative z-10">
-                <div className="space-y-2 text-center md:text-left">
-                   <div className="flex items-center justify-center md:justify-start gap-2">
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded bg-[#1D9E75] text-white uppercase tracking-widest">{t('governance.featured')}</span>
-                      <span className="text-[10px] font-mono font-bold text-gray-400">AIP-001</span>
-                   </div>
-                   <h3 className="text-2xl font-black tracking-tight">{t('governance.aip001_title')}</h3>
-                   <p className="text-sm text-[#0F6E56] dark:text-[#1D9E75]/70 font-medium">{t('governance.aip001_subtitle')}</p>
-                </div>
-                <Link href="/governance/aip-001" className="w-full md:w-auto">
-                   <button className="w-full md:w-auto px-8 py-3 bg-[#1D9E75] text-white font-black rounded-xl hover:bg-[#0F6E56] transition-all flex items-center justify-center gap-2 shadow-md">
-                      {t('governance.vote_now')} <ArrowRight size={18} />
-                   </button>
-                </Link>
-             </div>
-          </div>
-
           {isLoading ? (
             [1, 2, 3, 4].map(i => <SkeletonLoader key={i} height="160px" className="rounded-[24px]" />)
           ) : filteredProposals.length > 0 ? (
