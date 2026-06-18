@@ -99,7 +99,14 @@ export default function ProposalClient() {
         supabase.from('proposal_metadata').select('*').eq('proposal_id', id).single()
       ]);
       const found = (all as any[]).find(p => p.id.toString() === id);
-      
+
+      // AIP-001 has its own dedicated rich page — send any /governance/<id>
+      // hit for it there so there's a single canonical view.
+      if (found && found.title.toUpperCase().includes('AIP-001')) {
+        router.replace('/governance/aip-001');
+        return;
+      }
+
       if (found) {
         setProposal(found);
         setBlockNumber(block);

@@ -40,8 +40,8 @@ import {
 } from '@/lib/contract';
 import { useToast } from '@/components/shared/Toast';
 import { useTranslation } from '@/lib/i18n';
-
-const YOUR_WALLET_ADDRESS = '0x196288da05b125e42Eb92bAB38F4ed7642dc8522'; // Placeholder
+import ProposalStatusBadge from '@/components/shared/ProposalStatusBadge';
+import { isVotingActive, getProposalStatus, getVotingStart } from '@/lib/proposal-status';
 
 export default function AIP001Page() {
   const [proposal, setProposal] = useState<any>(null);
@@ -87,13 +87,6 @@ Token Allocation:
 15% — Validator recognition incentives
 10% — Builder / founder allocation
 5%  — Hackathon and bounty prizes
-
-Reward Rates (proposed):
-Casting a governance vote: 10 tARC
-Submitting a proposal: 50 tARC
-Validator application submitted: 100 tARC
-Early user retroactive drop: 500 tARC
-Architect builder monthly: 1,000 tARC
 
 Timeline:
 If AIP-001 passes: tARC deployed within 7 days
@@ -224,17 +217,18 @@ Vote NO to reject this proposal.`;
             <span className="px-2.5 py-1 rounded text-[10px] font-black tracking-wider bg-amber-50 text-amber-600 dark:bg-amber-900/10 uppercase">
               ECOSYSTEM
             </span>
-            <div className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 bg-green-50 text-green-700 dark:bg-green-900/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              Signal Vote Active
-            </div>
-            <span className="text-xs text-gray-500 flex items-center gap-1.5">
-              <User size={14} /> {t('proposal.proposed_by')}
-              <span className="font-mono font-bold text-[#1D9E75]">{YOUR_WALLET_ADDRESS.slice(0, 6)}...{YOUR_WALLET_ADDRESS.slice(-4)}</span>
-            </span>
-            <span className="text-xs text-gray-500 flex items-center gap-1.5">
-              <Clock size={14} /> Submitted May 8, 2026
-            </span>
+            {proposal && <ProposalStatusBadge proposal={proposal} />}
+            {proposal && (
+              <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                <User size={14} /> {t('proposal.proposed_by')}
+                <span className="font-mono font-bold text-[#1D9E75]">{proposal.proposer.slice(0, 6)}...{proposal.proposer.slice(-4)}</span>
+              </span>
+            )}
+            {proposal && (
+              <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                <Clock size={14} /> {getVotingStart(proposal).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            )}
           </div>
         </header>
 
@@ -277,7 +271,13 @@ Vote NO to reject this proposal.`;
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                   {userVoteStatus ? (
+                   {!isVotingActive(proposal) ? (
+                     <div className="md:col-span-3 p-6 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-800 rounded-2xl text-center space-y-2">
+                        <Clock className="mx-auto text-gray-400" size={32} />
+                        <p className="text-sm font-black text-gray-500">{t('proposal.voting_closed')}</p>
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">{t('common.' + getProposalStatus(proposal).toLowerCase())}</p>
+                     </div>
+                   ) : userVoteStatus ? (
                      <div className="md:col-span-3 p-6 bg-green-500/10 border border-green-500/30 rounded-2xl text-center space-y-2">
                         <CheckCircle2 className="mx-auto text-green-500" size={32} />
                         <p className="text-sm font-black text-green-500">{t('proposal.you_have_voted')}</p>
@@ -371,26 +371,6 @@ Vote NO to reject this proposal.`;
                        ))}
                     </div>
                   </div>
-
-                  <div className="w-full h-px bg-gray-100 dark:bg-gray-800" />
-
-                  <div>
-                    <h2 className="text-2xl font-black mb-6">Reward Rates (Proposed)</h2>
-                    <div className="space-y-4">
-                       {[
-                         { action: 'Casting a governance vote', rate: '10 tARC' },
-                         { action: 'Submitting a proposal', rate: '50 tARC' },
-                         { action: 'Validator application submitted', rate: '100 tARC' },
-                         { action: 'Early user retroactive drop', rate: '500 tARC' },
-                         { action: 'Architect builder monthly', rate: '1,000 tARC' },
-                       ].map((r) => (
-                         <div key={r.action} className="flex justify-between items-center text-sm">
-                            <span className="text-gray-500 font-medium">{r.action}</span>
-                            <span className="font-black text-[#1D9E75] bg-[#1D9E75]/5 px-3 py-1 rounded-full">{r.rate}</span>
-                         </div>
-                       ))}
-                    </div>
-                  </div>
                </div>
             </section>
 
@@ -455,7 +435,7 @@ Vote NO to reject this proposal.`;
                </h3>
                <div className="space-y-6">
                   {[
-                    { step: 1, title: 'Community Vote', desc: 'Signal voting on AIP-001 is now open.', active: true },
+                    { step: 1, title: 'Community Vote', desc: proposal && !isVotingActive(proposal) ? 'Voting on AIP-001 has closed.' : 'Signal voting on AIP-001 is now open.', active: proposal ? isVotingActive(proposal) : true },
                     { step: 2, title: 'tARC Deployment', desc: 'If passed, the token launches within 7 days.' },
                     { step: 3, title: 'Early User Drop', desc: 'Retroactive tokens sent to active testers.' },
                     { step: 4, title: 'AIP-002 Staking', desc: 'Governance vote for staking rewards.' },
